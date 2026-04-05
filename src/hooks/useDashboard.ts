@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import {
   addDays,
@@ -13,7 +14,6 @@ import type {
   AppointmentStatus,
   BillingRow,
   DashboardData,
-  LeadRow,
   PatientRow,
   StatusTone,
   TherapistRow,
@@ -116,34 +116,36 @@ const fallbackDashboardData: DashboardData = {
       status: "scheduled",
     },
   ],
-  pipelineStages: [
-    { label: "New Leads", count: 18, tone: "blue" },
-    { label: "Booked", count: 9, tone: "indigo" },
+  patientStatuses: [
     { label: "Active", count: 34, tone: "green" },
-    { label: "Completed", count: 12, tone: "purple" },
+    { label: "Completed", count: 12, tone: "blue" },
+    { label: "Dropped", count: 4, tone: "red" },
   ],
-  leadsNeedingFollowUp: [
+  recentPatients: [
     {
-      id: "lead-1",
-      name: "Tasnim Ara",
+      id: "pat-lamia-haque",
+      name: "Lamia Haque",
       createdLabel: "45 minutes ago",
+      status: "active",
     },
     {
-      id: "lead-2",
-      name: "Mahfuzur Rahman",
+      id: "pat-arman-khan",
+      name: "Arman Khan",
       createdLabel: "2 hours ago",
+      status: "completed",
     },
     {
-      id: "lead-3",
-      name: "Rumana Ahmed",
+      id: "pat-sadia-jahan",
+      name: "Sadia Jahan",
       createdLabel: "yesterday",
+      status: "active",
     },
   ],
   attentionItems: [
     {
-      badge: "Follow-up",
-      title: "Leads waiting on a callback",
-      detail: "3 fresh inquiries from WhatsApp and referral sources need follow-up today.",
+      badge: "Plans",
+      title: "Patients still need treatment plans",
+      detail: "4 active patients were added without session plans and should be updated today.",
       tone: "yellow",
     },
     {
@@ -192,22 +194,22 @@ function toTrend(current: number, previous: number, invert = false) {
 }
 
 function toAttentionItems(
-  followUpLeadCount: number,
+  planSetupCount: number,
   remainingTodaySessions: number,
   missedSessions: number,
 ) {
   return [
     {
-      badge: followUpLeadCount > 0 ? "Follow-up" : "Stable",
+      badge: planSetupCount > 0 ? "Plans" : "Ready",
       title:
-        followUpLeadCount > 0
-          ? "Leads waiting on a callback"
-          : "Follow-up queue is clear",
+        planSetupCount > 0
+          ? "Patients still need treatment plans"
+          : "All active patients have plans",
       detail:
-        followUpLeadCount > 0
-          ? `${followUpLeadCount} recent lead${followUpLeadCount > 1 ? "s need" : " needs"} follow-up today.`
-          : "No fresh lead is waiting on an immediate callback.",
-      tone: (followUpLeadCount > 0 ? "yellow" : "green") as StatusTone,
+        planSetupCount > 0
+          ? `${planSetupCount} active patient${planSetupCount > 1 ? "s are" : " is"} missing a session plan right now.`
+          : "Every active patient already has a plan attached.",
+      tone: (planSetupCount > 0 ? "yellow" : "green") as StatusTone,
     },
     {
       badge: remainingTodaySessions > 0 ? "Schedule" : "On track",
@@ -238,7 +240,6 @@ function toAttentionItems(
 
 function buildLiveDashboardData(
   appointments: AppointmentWithRelations[],
-  leads: LeadRow[],
   patients: PatientRow[],
   billing: BillingRow[],
 ): DashboardData {
@@ -293,6 +294,8 @@ function buildLiveDashboardData(
     .reduce((total, record) => total + Number(record.amount), 0);
 
   const activePatients = patients.filter((patient) => patient.status === "active").length;
+  const completedPatients = patients.filter((patient) => patient.status === "completed").length;
+  const droppedPatients = patients.filter((patient) => patient.status === "dropped").length;
   const previousActivePatients = patients.filter((patient) => {
     if (patient.status !== "active" || !patient.created_at) {
       return false;
@@ -301,8 +304,9 @@ function buildLiveDashboardData(
     return new Date(patient.created_at) < weekStart;
   }).length;
 
-  const followUpLeads = leads.filter(
-    (lead) => lead.status === "new" || lead.status === "contacted",
+  const patientsNeedingPlans = patients.filter(
+    (patient) =>
+      (patient.status ?? "active") === "active" && (patient.total_sessions ?? 0) === 0,
   );
 
   const remainingTodaySessions = todaysAppointments.filter(
@@ -330,35 +334,31 @@ function buildLiveDashboardData(
       time: formatTime(appointment.scheduled_at),
       status: toDashboardStatus(appointment.status),
     })),
-    pipelineStages: [
-      {
-        label: "New Leads",
-        count: leads.filter((lead) => lead.status === "new").length,
-        tone: "blue",
-      },
-      {
-        label: "Booked",
-        count: leads.filter((lead) => lead.status === "booked").length,
-        tone: "indigo",
-      },
+    patientStatuses: [
       {
         label: "Active",
-        count: leads.filter((lead) => lead.status === "ongoing").length,
+        count: activePatients,
         tone: "green",
       },
       {
         label: "Completed",
-        count: leads.filter((lead) => lead.status === "completed").length,
-        tone: "purple",
+        count: completedPatients,
+        tone: "blue",
+      },
+      {
+        label: "Dropped",
+        count: droppedPatients,
+        tone: "red",
       },
     ],
-    leadsNeedingFollowUp: followUpLeads.slice(0, 3).map((lead) => ({
-      id: lead.id,
-      name: lead.name,
-      createdLabel: lead.created_at ? formatRelativeTime(lead.created_at) : "recently",
+    recentPatients: patients.slice(0, 3).map((patient) => ({
+      id: patient.id,
+      name: patient.name,
+      createdLabel: patient.created_at ? formatRelativeTime(patient.created_at) : "recently",
+      status: patient.status ?? "active",
     })),
     attentionItems: toAttentionItems(
-      followUpLeads.length,
+      patientsNeedingPlans.length,
       remainingTodaySessions,
       missedSessions,
     ),
@@ -366,6 +366,7 @@ function buildLiveDashboardData(
 }
 
 export function useDashboard() {
+  const { linkedTherapistId, role } = useAuth();
   const [state, setState] = useState<UseDashboardState>({
     data: fallbackDashboardData,
     error: null,
@@ -390,7 +391,7 @@ export function useDashboard() {
         return;
       }
 
-      const [appointmentsResponse, leadsResponse, patientsResponse, billingResponse] =
+      const [appointmentsResponse, patientsResponse, billingResponse] =
         await Promise.all([
           supabase
             .from("appointments")
@@ -398,10 +399,6 @@ export function useDashboard() {
               "id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, created_at, patient:patients(name), therapist:therapists(name)",
             )
             .order("scheduled_at", { ascending: true }),
-          supabase
-            .from("leads")
-            .select("id, name, phone, source, condition, status, assigned_to, notes, created_at, updated_at")
-            .order("created_at", { ascending: false }),
           supabase
             .from("patients")
             .select("id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, total_sessions, completed_sessions, status, created_at")
@@ -416,12 +413,7 @@ export function useDashboard() {
         return;
       }
 
-      const responses = [
-        appointmentsResponse,
-        leadsResponse,
-        patientsResponse,
-        billingResponse,
-      ];
+      const responses = [appointmentsResponse, patientsResponse, billingResponse];
       const failedResponse = responses.find((response) => response.error);
 
       if (failedResponse?.error) {
@@ -440,7 +432,6 @@ export function useDashboard() {
 
       const liveData = buildLiveDashboardData(
         (appointmentsResponse.data ?? []) as AppointmentWithRelations[],
-        (leadsResponse.data ?? []) as LeadRow[],
         (patientsResponse.data ?? []) as PatientRow[],
         (billingResponse.data ?? []) as BillingRow[],
       );
@@ -458,7 +449,7 @@ export function useDashboard() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [linkedTherapistId, role]);
 
   return state;
 }

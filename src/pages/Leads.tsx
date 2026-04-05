@@ -157,9 +157,33 @@ function LeadFormFields({
           <input
             {...register("condition")}
             type="text"
+            list="condition-suggestions"
             placeholder="Low back pain"
+            autoComplete="off"
             className={fieldClassName(Boolean(errors.condition))}
           />
+          <datalist id="condition-suggestions">
+            <option value="Low back pain" />
+            <option value="Neck pain" />
+            <option value="Cervical spondylosis" />
+            <option value="Frozen shoulder" />
+            <option value="Knee pain" />
+            <option value="OA Knee" />
+            <option value="Sciatica" />
+            <option value="Stroke rehabilitation" />
+            <option value="Disc herniation" />
+            <option value="Tennis elbow" />
+            <option value="Plantar fasciitis" />
+            <option value="Post-surgical rehab" />
+            <option value="Rotator cuff injury" />
+            <option value="Bell's palsy" />
+            <option value="Cerebral palsy" />
+            <option value="Sports injury" />
+            <option value="Muscle strain" />
+            <option value="Arthritis" />
+            <option value="Postural correction" />
+            <option value="Carpal tunnel syndrome" />
+          </datalist>
         </label>
 
         <label className="text-sm font-medium text-foreground">

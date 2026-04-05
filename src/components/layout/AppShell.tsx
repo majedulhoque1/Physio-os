@@ -14,7 +14,7 @@ export function AppShell() {
       <div className="flex min-h-screen flex-col lg:ml-60 lg:h-screen">
         <Header breadcrumbs={routeMeta.breadcrumbs} title={routeMeta.title} />
 
-        <main className="flex-1 overflow-y-auto bg-background px-4 py-4 pb-24 sm:px-6 sm:py-6 lg:px-6">
+        <main className="flex-1 overflow-y-auto bg-background px-4 py-4 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-6 lg:pb-6 lg:px-6">
           <div className="mx-auto w-full max-w-[1280px]">
             <Outlet />
           </div>

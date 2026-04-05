@@ -45,18 +45,118 @@ export type AppointmentStatus =
   | "cancelled";
 export type PaymentMethod = "cash" | "bkash" | "nagad" | "card";
 export type BillingStatus = "due" | "paid" | "partial";
+export type ClinicStaffRole = "clinic_admin" | "therapist" | "receptionist";
+export type MembershipStatus = "active" | "invited" | "suspended";
+export type SubscriptionPlanKey = "starter" | "pro" | "enterprise";
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "cancelled"
+  | "incomplete";
+export type InvoiceStatus = "draft" | "open" | "paid" | "void" | "uncollectible";
+
+export interface ClinicRow {
+  created_at: string | null;
+  id: string;
+  name: string;
+  owner_user_id: string | null;
+  slug: string;
+  updated_at: string | null;
+}
+
+export interface UserProfileRow {
+  avatar_url: string | null;
+  created_at: string | null;
+  default_clinic_id: string | null;
+  full_name: string | null;
+  id: string;
+  phone: string | null;
+  updated_at: string | null;
+}
+
+export interface ClinicMembershipRow {
+  clinic_id: string;
+  created_at: string | null;
+  id: string;
+  invited_by: string | null;
+  role: ClinicStaffRole;
+  status: MembershipStatus;
+  updated_at: string | null;
+  user_id: string;
+}
+
+export interface ClinicInvitationRow {
+  accepted_at: string | null;
+  clinic_id: string;
+  created_at: string | null;
+  email: string;
+  expires_at: string | null;
+  id: string;
+  invited_by: string | null;
+  revoked_at: string | null;
+  role: ClinicStaffRole;
+  token: string;
+  updated_at: string | null;
+}
+
+export interface SubscriptionPlanRow {
+  appointment_limit_monthly: number | null;
+  created_at: string | null;
+  id: string;
+  monthly_price_cents: number;
+  name: string;
+  patient_limit: number | null;
+  plan_key: SubscriptionPlanKey;
+  therapist_limit: number | null;
+  updated_at: string | null;
+}
+
+export interface ClinicSubscriptionRow {
+  clinic_id: string;
+  created_at: string | null;
+  current_period_end: string | null;
+  current_period_start: string | null;
+  id: string;
+  plan_key: SubscriptionPlanKey;
+  status: SubscriptionStatus;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  trial_ends_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SubscriptionInvoiceRow {
+  amount_due_cents: number;
+  amount_paid_cents: number;
+  clinic_id: string;
+  created_at: string | null;
+  currency: string;
+  due_at: string | null;
+  hosted_invoice_url: string | null;
+  id: string;
+  invoice_pdf_url: string | null;
+  paid_at: string | null;
+  status: InvoiceStatus;
+  stripe_invoice_id: string | null;
+  subscription_id: string | null;
+  updated_at: string | null;
+}
 
 export interface TherapistRow {
+  clinic_id?: string | null;
   created_at: string | null;
   id: string;
   name: string;
   phone: string | null;
   specialization: string | null;
   status: TherapistStatus | null;
+  user_id?: string | null;
 }
 
 export interface LeadRow {
   assigned_to: string | null;
+  clinic_id?: string | null;
   condition: string | null;
   created_at: string | null;
   id: string;
@@ -71,6 +171,7 @@ export interface LeadRow {
 export interface PatientRow {
   age: number | null;
   assigned_therapist: string | null;
+  clinic_id?: string | null;
   completed_sessions: number | null;
   created_at: string | null;
   diagnosis: string | null;
@@ -84,6 +185,7 @@ export interface PatientRow {
 }
 
 export interface AppointmentRow {
+  clinic_id?: string | null;
   created_at: string | null;
   duration_mins: number | null;
   id: string;
@@ -95,8 +197,14 @@ export interface AppointmentRow {
   therapist_id: string;
 }
 
+export interface AppointmentWithRelations extends AppointmentRow {
+  patients: { name: string; phone: string } | null;
+  therapists: { name: string } | null;
+}
+
 export interface SessionNoteRow {
   appointment_id: string;
+  clinic_id?: string | null;
   created_at: string | null;
   exercises_done: string[] | null;
   id: string;
@@ -111,6 +219,7 @@ export interface SessionNoteRow {
 export interface BillingRow {
   amount: number;
   appointment_id: string | null;
+  clinic_id?: string | null;
   created_at: string | null;
   id: string;
   package_name: string | null;
@@ -122,12 +231,82 @@ export interface BillingRow {
   status: BillingStatus | null;
 }
 
+export interface ClientProfileRow {
+  address: string | null;
+  clinic_id: string;
+  contraindications: string | null;
+  created_at: string | null;
+  created_by: string | null;
+  date_of_birth: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  goals: string | null;
+  id: string;
+  intake_notes: string | null;
+  medical_history: string | null;
+  occupation: string | null;
+  patient_id: string;
+  updated_at: string | null;
+}
+
 export interface Database {
   public: {
     CompositeTypes: Record<string, never>;
     Enums: Record<string, never>;
     Functions: Record<string, never>;
     Tables: {
+      clinic_invitations: {
+        Insert: Omit<ClinicInvitationRow, "accepted_at" | "created_at" | "id" | "revoked_at" | "updated_at"> & {
+          accepted_at?: string | null;
+          created_at?: string | null;
+          id?: string;
+          revoked_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClinicInvitationRow;
+        Update: Partial<ClinicInvitationRow>;
+      };
+      clinic_memberships: {
+        Insert: Omit<ClinicMembershipRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClinicMembershipRow;
+        Update: Partial<ClinicMembershipRow>;
+      };
+      clinic_subscriptions: {
+        Insert: Omit<ClinicSubscriptionRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClinicSubscriptionRow;
+        Update: Partial<ClinicSubscriptionRow>;
+      };
+      clinics: {
+        Insert: Omit<ClinicRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClinicRow;
+        Update: Partial<ClinicRow>;
+      };
+      client_profiles: {
+        Insert: Omit<ClientProfileRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClientProfileRow;
+        Update: Partial<ClientProfileRow>;
+      };
       appointments: {
         Insert: Omit<AppointmentRow, "created_at" | "id"> & {
           created_at?: string | null;
@@ -138,9 +317,10 @@ export interface Database {
         Update: Partial<AppointmentRow>;
       };
       billing: {
-        Insert: Omit<BillingRow, "created_at" | "id"> & {
+        Insert: Omit<BillingRow, "created_at" | "id" | "paid_at"> & {
           created_at?: string | null;
           id?: string;
+          paid_at?: string | null;
         };
         Relationships: [];
         Row: BillingRow;
@@ -174,6 +354,26 @@ export interface Database {
         Row: SessionNoteRow;
         Update: Partial<SessionNoteRow>;
       };
+      subscription_invoices: {
+        Insert: Omit<SubscriptionInvoiceRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: SubscriptionInvoiceRow;
+        Update: Partial<SubscriptionInvoiceRow>;
+      };
+      subscription_plans: {
+        Insert: Omit<SubscriptionPlanRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: SubscriptionPlanRow;
+        Update: Partial<SubscriptionPlanRow>;
+      };
       therapists: {
         Insert: Omit<TherapistRow, "created_at" | "id"> & {
           created_at?: string | null;
@@ -182,6 +382,15 @@ export interface Database {
         Relationships: [];
         Row: TherapistRow;
         Update: Partial<TherapistRow>;
+      };
+      user_profiles: {
+        Insert: Omit<UserProfileRow, "created_at" | "updated_at"> & {
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: UserProfileRow;
+        Update: Partial<UserProfileRow>;
       };
     };
     Views: Record<string, never>;
@@ -208,16 +417,17 @@ export interface DashboardAppointmentItem {
   time: string;
 }
 
-export interface DashboardPipelineStage {
+export interface DashboardPatientStatusItem {
   count: number;
   label: string;
   tone: StatusTone;
 }
 
-export interface DashboardLeadFollowUpItem {
+export interface DashboardRecentPatientItem {
   createdLabel: string;
   id: string;
   name: string;
+  status: PatientStatus;
 }
 
 export interface DashboardAttentionItem {
@@ -231,8 +441,8 @@ export interface DashboardData {
   appointments: DashboardAppointmentItem[];
   attentionItems: DashboardAttentionItem[];
   kpis: DashboardKpis;
-  leadsNeedingFollowUp: DashboardLeadFollowUpItem[];
-  pipelineStages: DashboardPipelineStage[];
+  patientStatuses: DashboardPatientStatusItem[];
+  recentPatients: DashboardRecentPatientItem[];
   trends: {
     activePatients: DashboardTrend;
     missedSessions: DashboardTrend;

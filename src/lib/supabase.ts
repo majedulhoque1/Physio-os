@@ -9,7 +9,9 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const supabase = isSupabaseConfigured
   ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
-        persistSession: false,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        persistSession: true,
       },
     })
   : null;

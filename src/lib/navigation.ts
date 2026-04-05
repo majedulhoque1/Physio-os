@@ -3,13 +3,14 @@ import {
   CalendarDays,
   CreditCard,
   LayoutDashboard,
+  Settings,
   Stethoscope,
-  UserPlus,
   Users,
 } from "lucide-react";
-import type { NavItem, RouteMeta } from "@/types";
+import { canAccessPath } from "@/lib/permissions";
+import type { ClinicStaffRole, NavItem, RouteMeta } from "@/types";
 
-export const desktopNavItems: NavItem[] = [
+const baseDesktopNavItems: NavItem[] = [
   {
     href: "/",
     icon: LayoutDashboard,
@@ -17,14 +18,6 @@ export const desktopNavItems: NavItem[] = [
     title: "Dashboard",
     breadcrumbs: ["Physio OS", "Dashboard"],
     end: true,
-  },
-  {
-    href: "/leads",
-    icon: UserPlus,
-    label: "Leads",
-    title: "Lead Pipeline",
-    breadcrumbs: ["Physio OS", "Lead Pipeline"],
-    badge: 12,
   },
   {
     href: "/appointments",
@@ -41,11 +34,11 @@ export const desktopNavItems: NavItem[] = [
     breadcrumbs: ["Clinic", "Patients"],
   },
   {
-    href: "/workspace",
+    href: "/therapists",
     icon: Stethoscope,
     label: "Therapists",
-    title: "Therapist Workspace",
-    breadcrumbs: ["Team", "Therapist Workspace"],
+    title: "Therapists",
+    breadcrumbs: ["Team", "Therapists"],
   },
   {
     href: "/billing",
@@ -63,26 +56,59 @@ export const desktopNavItems: NavItem[] = [
   },
 ];
 
-export const mobileNavItems: NavItem[] = [
-  desktopNavItems[0],
-  desktopNavItems[1],
-  {
-    ...desktopNavItems[2],
-    mobileLabel: "Appts",
-  },
-  desktopNavItems[3],
-  desktopNavItems[5],
-];
+// Settings is in the sidebar footer, not the main nav list
+export const settingsNavItem: NavItem = {
+  href: "/settings",
+  icon: Settings,
+  label: "Settings",
+  title: "Settings",
+  breadcrumbs: ["Clinic", "Settings"],
+};
+
+export function getDesktopNavItems(role: ClinicStaffRole | null | undefined) {
+  return baseDesktopNavItems.filter((item) => canAccessPath(item.href, role));
+}
+
+export function getMobileNavItems(role: ClinicStaffRole | null | undefined) {
+  const desktopNavItems = getDesktopNavItems(role);
+
+  return [
+    desktopNavItems[0],
+    desktopNavItems.find((item) => item.href === "/appointments"),
+    desktopNavItems.find((item) => item.href === "/patients"),
+    desktopNavItems.find((item) => item.href === "/billing"),
+    desktopNavItems.find((item) => item.href === "/therapists"),
+  ]
+    .filter(Boolean)
+    .map((item) => {
+      if (item?.href === "/appointments") {
+        return {
+          ...item,
+          mobileLabel: "Appts",
+        };
+      }
+
+      if (item?.href === "/therapists") {
+        return {
+          ...item,
+          mobileLabel: "Team",
+        };
+      }
+
+      return item;
+    }) as NavItem[];
+}
 
 export function getRouteMeta(pathname: string): RouteMeta {
-  if (pathname.startsWith("/patients/")) {
-    return {
+  if (pathname.startsWith("/patients/")) {    return {
       title: "Patient Profile",
       breadcrumbs: ["Patients", "Patient Profile"],
     };
   }
 
-  const matchedRoute = desktopNavItems.find((item) =>
+  if (pathname === "/settings") return settingsNavItem;
+
+  const matchedRoute = baseDesktopNavItems.find((item) =>
     item.href === "/" ? pathname === item.href : pathname.startsWith(item.href),
   );
 

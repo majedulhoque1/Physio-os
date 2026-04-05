@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMockClinic } from "@/contexts/MockClinicContext";
+import { getVisiblePatients } from "@/lib/mockClinic";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { Database, PatientRow, PatientStatus } from "@/types";
 
@@ -43,7 +45,7 @@ function normalizeOptionalText(value?: string | null) {
 
 /**
  * SECURITY PATTERN: Multi-Tenant Patient Hook
- *
+ * 
  * 1. All Supabase queries filter by clinic_id from auth context
  * 2. RLS policies enforced server-side
  * 3. Role-based filtering:
@@ -52,14 +54,33 @@ function normalizeOptionalText(value?: string | null) {
  * 4. Mutations enforce clinic context and role permissions
  */
 export function usePatients() {
-  const { can, clinicId, linkedTherapistId, role } = useAuth();
+  const { can, clinicId, isDemoMode, linkedTherapistId, role } = useAuth();
+  const { createPatient: createMockPatient, data: mockData, updatePatient: updateMockPatient } =
+    useMockClinic();
   const [state, setState] = useState<UsePatientsState>({
     error: null,
     isLoading: true,
     patients: [],
   });
 
+  const demoPatients = useMemo(
+    () =>
+      getVisiblePatients(mockData, role, linkedTherapistId).sort((left, right) =>
+        (right.created_at ?? "").localeCompare(left.created_at ?? ""),
+      ),
+    [mockData, role, linkedTherapistId],
+  );
+
   const loadPatients = useCallback(async () => {
+    if (isDemoMode) {
+      setState({
+        error: null,
+        isLoading: false,
+        patients: demoPatients,
+      });
+      return;
+    }
+
     if (!supabase) {
       setState({
         error: supabaseConfigMessage,
@@ -105,12 +126,23 @@ export function usePatients() {
       isLoading: false,
       patients: (filtered as PatientRow[]),
     });
-  }, [clinicId, linkedTherapistId, role]);
+  }, [clinicId, isDemoMode, demoPatients, linkedTherapistId, role]);
 
   useEffect(() => {
     let isActive = true;
 
     async function initialize() {
+      if (isDemoMode) {
+        if (isActive) {
+          setState({
+            error: null,
+            isLoading: false,
+            patients: demoPatients,
+          });
+        }
+        return;
+      }
+
       if (!supabase) {
         if (isActive) {
           setState({
@@ -169,13 +201,28 @@ export function usePatients() {
     return () => {
       isActive = false;
     };
-  }, [clinicId, linkedTherapistId, role]);
+  }, [clinicId, isDemoMode, demoPatients, linkedTherapistId, role]);
 
   const createPatient = useCallback(
     async (input: CreatePatientInput): Promise<PatientMutationResult> => {
       // SECURITY: Permission check
       if (!can("manage_patients")) {
         return { error: "You do not have permission to create patients.", patientId: null };
+      }
+
+      if (isDemoMode) {
+        const id = createMockPatient({
+          age: input.age ?? null,
+          assigned_therapist: input.assigned_therapist ?? null,
+          diagnosis: normalizeOptionalText(input.diagnosis),
+          gender: normalizeOptionalText(input.gender),
+          name: input.name.trim(),
+          phone: input.phone.trim(),
+          status: input.status ?? "active",
+          total_sessions: input.total_sessions ?? null,
+        });
+
+        return { error: null, patientId: id };
       }
 
       if (!supabase) return { error: supabaseConfigMessage, patientId: null };
@@ -204,7 +251,7 @@ export function usePatients() {
       await loadPatients();
       return { error: null, patientId: (data as any)?.id ?? null };
     },
-    [can, clinicId, loadPatients],
+    [can, clinicId, createMockPatient, isDemoMode, loadPatients],
   );
 
   const updatePatient = useCallback(
@@ -212,6 +259,16 @@ export function usePatients() {
       // SECURITY: Permission check
       if (!can("manage_patients")) {
         return { error: "You do not have permission to update patients.", patientId: null };
+      }
+
+      if (isDemoMode) {
+        updateMockPatient(patientId, {
+          assigned_therapist: input.assigned_therapist ?? null,
+          diagnosis: normalizeOptionalText(input.diagnosis),
+          status: input.status,
+          total_sessions: input.total_sessions,
+        });
+        return { error: null, patientId };
       }
 
       if (!supabase) return { error: supabaseConfigMessage, patientId: null };
@@ -235,7 +292,7 @@ export function usePatients() {
       await loadPatients();
       return { error: null, patientId };
     },
-    [can, clinicId, loadPatients],
+    [can, clinicId, isDemoMode, loadPatients],
   );
 
   return {

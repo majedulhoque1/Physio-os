@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMockClinic } from "@/contexts/MockClinicContext";
+import {
+  buildAppointmentRelations,
+  getVisibleAppointments,
+} from "@/lib/mockClinic";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { AppointmentStatus, AppointmentWithRelations, Database } from "@/types";
 
@@ -35,7 +40,7 @@ const SELECT_FIELDS =
 
 /**
  * SECURITY PATTERN: Multi-Tenant Appointment Hook
- *
+ * 
  * 1. All Supabase queries filter by clinic_id from auth context
  * 2. RLS policies enforced server-side (belt + suspenders)
  * 3. Role-based filtering on client:
@@ -44,14 +49,38 @@ const SELECT_FIELDS =
  * 4. Mutations check permission + clinic context
  */
 export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
-  const { can, clinicId, linkedTherapistId, role } = useAuth();
+  const { can, clinicId, isDemoMode, linkedTherapistId, role } = useAuth();
+  const {
+    createAppointment: createMockAppointment,
+    data: mockData,
+    updateAppointmentStatus: updateMockAppointmentStatus,
+  } = useMockClinic();
   const [state, setState] = useState<UseAppointmentsState>({
     appointments: [],
     error: null,
     isLoading: true,
   });
 
+  const demoAppointments = useMemo(
+    () =>
+      buildAppointmentRelations(
+        mockData,
+        getVisibleAppointments(mockData, role, linkedTherapistId),
+      )
+        .filter((appointment) => (patientId ? appointment.patient_id === patientId : true))
+        .sort(
+          (left, right) =>
+            new Date(left.scheduled_at).getTime() - new Date(right.scheduled_at).getTime(),
+        ),
+    [mockData, role, linkedTherapistId, patientId],
+  );
+
   const loadAppointments = useCallback(async () => {
+    if (isDemoMode) {
+      setState({ appointments: demoAppointments, error: null, isLoading: false });
+      return;
+    }
+
     if (!supabase) {
       setState({ appointments: [], error: supabaseConfigMessage, isLoading: false });
       return;
@@ -89,12 +118,19 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
       error: null,
       isLoading: false,
     });
-  }, [clinicId, linkedTherapistId, patientId, role]);
+  }, [clinicId, isDemoMode, demoAppointments, linkedTherapistId, patientId, role]);
 
   useEffect(() => {
     let isActive = true;
 
     async function initialize() {
+      if (isDemoMode) {
+        if (isActive) {
+          setState({ appointments: demoAppointments, error: null, isLoading: false });
+        }
+        return;
+      }
+
       if (!supabase) {
         if (isActive) {
           setState({ appointments: [], error: supabaseConfigMessage, isLoading: false });
@@ -145,13 +181,27 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
     return () => {
       isActive = false;
     };
-  }, [clinicId, linkedTherapistId, patientId, role]);
+  }, [clinicId, demoAppointments, isDemoMode, linkedTherapistId, patientId, role]);
 
   const createAppointment = useCallback(
     async (input: AppointmentMutationInput): Promise<AppointmentMutationResult> => {
       // SECURITY: Permission check
       if (!can("manage_appointments")) {
         return { error: "You do not have permission to book appointments." };
+      }
+
+      if (isDemoMode) {
+        createMockAppointment({
+          duration_mins: input.duration_mins ?? 45,
+          notes: input.notes ?? null,
+          patient_id: input.patient_id,
+          scheduled_at: input.scheduled_at,
+          session_number: input.session_number ?? null,
+          status: input.status ?? "scheduled",
+          therapist_id: input.therapist_id,
+        });
+
+        return { error: null };
       }
 
       if (!supabase) return { error: supabaseConfigMessage };
@@ -174,7 +224,7 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
       await loadAppointments();
       return { error: null };
     },
-    [can, clinicId, loadAppointments],
+    [can, clinicId, createMockAppointment, isDemoMode, loadAppointments],
   );
 
   const updateAppointmentStatus = useCallback(
@@ -182,6 +232,22 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
       // SECURITY: Permission check (therapist can update own, admin/receptionist can update any)
       if (!can("manage_appointments") && role !== "therapist") {
         return { error: "You do not have permission to update appointment status." };
+      }
+
+      if (isDemoMode) {
+        const appointment = mockData.appointments.find((item) => item.id === appointmentId);
+
+        if (!appointment) {
+          return { error: "Appointment not found." };
+        }
+
+        // SECURITY: Therapist can only update their own appointments
+        if (role === "therapist" && appointment.therapist_id !== linkedTherapistId) {
+          return { error: "Therapists can only update their own appointments." };
+        }
+
+        updateMockAppointmentStatus(appointmentId, status);
+        return { error: null };
       }
 
       if (!supabase) return { error: supabaseConfigMessage };
@@ -213,7 +279,7 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
       await loadAppointments();
       return { error: null };
     },
-    [can, clinicId, linkedTherapistId, role, supabaseConfigMessage, loadAppointments],
+    [can, clinicId, isDemoMode, linkedTherapistId, mockData.appointments, role, supabaseConfigMessage, updateMockAppointmentStatus, loadAppointments],
   );
 
   return {

@@ -2,6 +2,7 @@
 @import "tailwindcss";
 
 :root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
   --app-background: #f8f9fa;
   --app-surface: #ffffff;
   --app-sidebar-bg: #0f172a;
