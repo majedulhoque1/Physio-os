@@ -17,6 +17,7 @@ import type {
   PatientRow,
   StatusTone,
   TherapistRow,
+  TreatmentPlanRow,
 } from "@/types";
 
 type DashboardSource = "fallback" | "live";
@@ -242,6 +243,7 @@ function buildLiveDashboardData(
   appointments: AppointmentWithRelations[],
   patients: PatientRow[],
   billing: BillingRow[],
+  treatmentPlans: TreatmentPlanRow[],
 ): DashboardData {
   const todayStart = startOfDay();
   const tomorrowStart = addDays(todayStart, 1);
@@ -304,9 +306,10 @@ function buildLiveDashboardData(
     return new Date(patient.created_at) < weekStart;
   }).length;
 
+  const patientIdsWithPlans = new Set(treatmentPlans.map((tp) => tp.patient_id));
   const patientsNeedingPlans = patients.filter(
     (patient) =>
-      (patient.status ?? "active") === "active" && (patient.total_sessions ?? 0) === 0,
+      (patient.status ?? "active") === "active" && !patientIdsWithPlans.has(patient.id),
   );
 
   const remainingTodaySessions = todaysAppointments.filter(
@@ -366,7 +369,7 @@ function buildLiveDashboardData(
 }
 
 export function useDashboard() {
-  const { linkedTherapistId, role } = useAuth();
+  const { clinicId, linkedTherapistId, role } = useAuth();
   const [state, setState] = useState<UseDashboardState>({
     data: fallbackDashboardData,
     error: null,
@@ -391,29 +394,49 @@ export function useDashboard() {
         return;
       }
 
-      const [appointmentsResponse, patientsResponse, billingResponse] =
+      if (!clinicId) {
+        if (isActive) {
+          setState({
+            data: fallbackDashboardData,
+            error: "No clinic context",
+            isLoading: false,
+            source: "fallback",
+          });
+        }
+
+        return;
+      }
+
+      const [appointmentsResponse, patientsResponse, billingResponse, treatmentPlansResponse] =
         await Promise.all([
           supabase
             .from("appointments")
             .select(
-              "id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, created_at, patient:patients(name), therapist:therapists(name)",
+              "id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patient:patients(name), therapist:therapists(name)",
             )
+            .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
             .order("scheduled_at", { ascending: true }),
           supabase
             .from("patients")
-            .select("id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, total_sessions, completed_sessions, status, created_at")
+            .select("id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, status, created_at")
+            .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
             .order("created_at", { ascending: false }),
           supabase
             .from("billing")
-            .select("id, patient_id, appointment_id, amount, payment_method, status, package_name, sessions_included, sessions_used, paid_at, created_at")
+            .select("id, patient_id, appointment_id, amount, payment_method, status, package_name, sessions_included, sessions_used, treatment_plan_id, paid_at, created_at")
+            .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
             .order("created_at", { ascending: false }),
+          supabase
+            .from("treatment_plans")
+            .select("id, patient_id, therapist_id, total_sessions, completed_sessions, status, created_at")
+            .eq("clinic_id", clinicId),
         ]);
 
       if (!isActive) {
         return;
       }
 
-      const responses = [appointmentsResponse, patientsResponse, billingResponse];
+      const responses = [appointmentsResponse, patientsResponse, billingResponse, treatmentPlansResponse];
       const failedResponse = responses.find((response) => response.error);
 
       if (failedResponse?.error) {
@@ -434,6 +457,7 @@ export function useDashboard() {
         (appointmentsResponse.data ?? []) as AppointmentWithRelations[],
         (patientsResponse.data ?? []) as PatientRow[],
         (billingResponse.data ?? []) as BillingRow[],
+        (treatmentPlansResponse.data ?? []) as TreatmentPlanRow[],
       );
 
       setState({
@@ -449,7 +473,7 @@ export function useDashboard() {
     return () => {
       isActive = false;
     };
-  }, [linkedTherapistId, role]);
+  }, [clinicId, linkedTherapistId, role]);
 
   return state;
 }

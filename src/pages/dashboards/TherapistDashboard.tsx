@@ -1,12 +1,10 @@
-import { Calendar, ClipboardList, Users, TrendingUp } from "lucide-react";
+import { Calendar, ClipboardList, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { StatCard } from "@/components/shared/StatCard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { useAuth } from "@/contexts/AuthContext";
 import { useDashboard } from "@/hooks/useDashboard";
 
 export function TherapistDashboard() {
-  const { linkedTherapistId } = useAuth();
   const { data: dashboardData, isLoading } = useDashboard();
 
   if (isLoading) {
@@ -50,7 +48,7 @@ export function TherapistDashboard() {
           trend="0%"
           trendDirection="down"
           icon={ClipboardList}
-          accentColor="orange"
+          accentColor="red"
         />
       </section>
 

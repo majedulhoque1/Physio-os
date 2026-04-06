@@ -9,9 +9,9 @@ import { Appointments } from "@/pages/Appointments";
 import { Billing } from "@/pages/Billing";
 import { Dashboard } from "@/pages/Dashboard";
 import { Login } from "@/pages/Login";
+import { MessageLog } from "@/pages/MessageLog";
 import { PatientProfile } from "@/pages/PatientProfile";
 import { Patients } from "@/pages/Patients";
-import { Register } from "@/pages/Register";
 import { Settings } from "@/pages/Settings";
 import { Therapists } from "@/pages/Therapists";
 
@@ -59,10 +59,6 @@ function App() {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate replace to="/" /> : <Login />}
-      />
-      <Route
-        path="/register"
-        element={isAuthenticated ? <Navigate replace to="/" /> : <Register />}
       />
 
       <Route
@@ -120,6 +116,14 @@ function App() {
           element={withBoundary(
             <RoleRoute path="/analytics">
               <Analytics />
+            </RoleRoute>,
+          )}
+        />
+        <Route
+          path="messages"
+          element={withBoundary(
+            <RoleRoute path="/messages">
+              <MessageLog />
             </RoleRoute>,
           )}
         />

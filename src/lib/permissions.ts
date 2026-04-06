@@ -69,6 +69,10 @@ export function canAccessPath(
     return hasPermission(role, "view_billing");
   }
 
+  if (pathname === "/messages") {
+    return role === "clinic_admin";
+  }
+
   if (pathname === "/analytics") {
     return hasPermission(role, "view_analytics");
   }

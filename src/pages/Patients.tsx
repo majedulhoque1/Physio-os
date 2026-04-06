@@ -49,13 +49,6 @@ function getPatientStatusTone(status: PatientStatus | null | undefined): StatusT
   }
 }
 
-function getProgressColor(completed: number, total: number) {
-  if (total === 0) return "bg-slate-200";
-  const pct = completed / total;
-  if (pct >= 0.75) return "bg-emerald-500";
-  if (pct >= 0.25) return "bg-amber-500";
-  return "bg-slate-300";
-}
 
 function fieldClassName(hasError: boolean) {
   return cn(
@@ -101,7 +94,6 @@ const patientEditSchema = z.object({
   assigned_therapist: z.string().optional(),
   diagnosis: z.string().optional(),
   status: z.enum(["active", "completed", "dropped"]),
-  total_sessions: z.coerce.number().int().min(0, "Must be 0 or more"),
 });
 
 const patientCreateSchema = z.object({
@@ -112,7 +104,6 @@ const patientCreateSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   phone: z.string().trim().min(1, "Phone is required"),
   status: z.enum(["active", "completed", "dropped"]),
-  total_sessions: z.coerce.number().int().min(0, "Must be 0 or more"),
 });
 
 type PatientEditFormInput = z.input<typeof patientEditSchema>;
@@ -120,38 +111,6 @@ type PatientCreateFormInput = z.input<typeof patientCreateSchema>;
 type PatientEditValues = z.output<typeof patientEditSchema>;
 type PatientCreateValues = z.output<typeof patientCreateSchema>;
 
-// --- Session progress bar ---
-
-function SessionProgress({
-  completed,
-  total,
-}: {
-  completed: number | null;
-  total: number | null;
-}) {
-  const c = completed ?? 0;
-  const t = total ?? 0;
-
-  if (t === 0) {
-    return <span className="text-xs text-muted-foreground">No plan</span>;
-  }
-
-  const pct = Math.min(Math.round((c / t) * 100), 100);
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100">
-        <div
-          className={cn("h-full rounded-full transition-all", getProgressColor(c, t))}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-xs tabular-nums text-muted-foreground">
-        {c}/{t}
-      </span>
-    </div>
-  );
-}
 
 function AddPatientModal({
   isSaving,
@@ -187,7 +146,6 @@ function AddPatientModal({
       name: "",
       phone: "",
       status: "active",
-      total_sessions: 0,
     },
   });
 
@@ -203,7 +161,6 @@ function AddPatientModal({
         name: "",
         phone: "",
         status: "active",
-        total_sessions: 0,
       });
       setStep(1);
       setDiagnosisMode("select");
@@ -382,33 +339,16 @@ function AddPatientModal({
                   </label>
                 </div>
 
-                {/* Therapist + Sessions */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Assigned Therapist
-                    <select {...register("assigned_therapist")} className={fieldClassName(false)}>
-                      <option value="">Unassigned</option>
-                      {therapists.map((t) => (
-                        <option key={t.id} value={t.id}>{t.name}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="text-sm font-medium text-foreground">
-                    Total Sessions
-                    <input
-                      {...register("total_sessions")}
-                      type="number"
-                      min={0}
-                      className={fieldClassName(Boolean(errors.total_sessions))}
-                    />
-                    {errors.total_sessions?.message ? (
-                      <span className="mt-1 block text-xs text-danger">
-                        {errors.total_sessions.message}
-                      </span>
-                    ) : null}
-                  </label>
-                </div>
+                {/* Therapist */}
+                <label className="text-sm font-medium text-foreground">
+                  Assigned Therapist
+                  <select {...register("assigned_therapist")} className={fieldClassName(false)}>
+                    <option value="">Unassigned</option>
+                    {therapists.map((t) => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </select>
+                </label>
 
                 <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-between">
                   <button
@@ -468,7 +408,6 @@ function PatientDetailDrawer({
       assigned_therapist: "",
       diagnosis: "",
       status: "active",
-      total_sessions: 0,
     },
   });
 
@@ -478,7 +417,6 @@ function PatientDetailDrawer({
       assigned_therapist: patient.assigned_therapist ?? "",
       diagnosis: patient.diagnosis ?? "",
       status: patient.status ?? "active",
-      total_sessions: patient.total_sessions ?? 0,
     });
   }, [patient, reset]);
 
@@ -551,21 +489,6 @@ function PatientDetailDrawer({
                 </select>
               </label>
 
-              <label className="text-sm font-medium text-foreground">
-                Total Sessions
-                <input
-                  {...register("total_sessions")}
-                  type="number"
-                  min={0}
-                  disabled={!canEdit}
-                  className={fieldClassName(Boolean(errors.total_sessions))}
-                />
-                {errors.total_sessions?.message ? (
-                  <span className="mt-1 block text-xs text-danger">
-                    {errors.total_sessions.message}
-                  </span>
-                ) : null}
-              </label>
             </div>
 
             <label className="text-sm font-medium text-foreground">
@@ -587,18 +510,6 @@ function PatientDetailDrawer({
 
           {/* Quick info */}
           <div className="mt-6 space-y-3">
-            <div className="rounded-lg border border-border bg-background p-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Session Progress
-              </p>
-              <div className="mt-2">
-                <SessionProgress
-                  completed={patient.completed_sessions}
-                  total={patient.total_sessions}
-                />
-              </div>
-            </div>
-
             <div className="rounded-lg border border-border bg-background p-4">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Added
@@ -719,12 +630,6 @@ function PatientTableRow({
         <span className="text-sm text-muted-foreground">{therapistLabel}</span>
       </td>
       <td className="px-4 py-3">
-        <SessionProgress
-          completed={patient.completed_sessions}
-          total={patient.total_sessions}
-        />
-      </td>
-      <td className="px-4 py-3">
         <StatusBadge
           label={patient.status ?? "active"}
           tone={getPatientStatusTone(patient.status)}
@@ -768,15 +673,9 @@ function PatientCard({
         {patient.diagnosis ?? "No diagnosis"}
       </p>
 
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Phone className="h-3.5 w-3.5" />
-          <span className="font-mono">{patient.phone}</span>
-        </div>
-        <SessionProgress
-          completed={patient.completed_sessions}
-          total={patient.total_sessions}
-        />
+      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+        <Phone className="h-3.5 w-3.5" />
+        <span className="font-mono">{patient.phone}</span>
       </div>
 
       <div className="mt-2 text-xs text-muted-foreground">
@@ -865,7 +764,6 @@ export function Patients() {
       name: values.name,
       phone: values.phone,
       status: values.status,
-      total_sessions: values.total_sessions,
     };
 
     const result = await createPatient(input);
@@ -900,7 +798,6 @@ export function Patients() {
       assigned_therapist: values.assigned_therapist || null,
       diagnosis: values.diagnosis || null,
       status: values.status,
-      total_sessions: values.total_sessions,
     };
 
     const result = await updatePatient(patientId, input);
@@ -1052,9 +949,6 @@ export function Patients() {
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Therapist
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Progress
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Status

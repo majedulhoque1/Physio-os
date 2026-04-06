@@ -37,6 +37,10 @@ export type LeadStatus =
   | "lost";
 export type TherapistStatus = "active" | "inactive";
 export type PatientStatus = "active" | "completed" | "dropped";
+export type TreatmentPlanStatus = "active" | "completed" | "abandoned" | "paused";
+export type MessageType = "thank_you" | "session_reminder" | "missed_session" | "followup" | "custom";
+export type MessageChannel = "whatsapp" | "sms" | "email";
+export type MessageStatus = "pending" | "sent" | "delivered" | "failed" | "read";
 export type AppointmentStatus =
   | "scheduled"
   | "confirmed"
@@ -172,7 +176,6 @@ export interface PatientRow {
   age: number | null;
   assigned_therapist: string | null;
   clinic_id?: string | null;
-  completed_sessions: number | null;
   created_at: string | null;
   diagnosis: string | null;
   gender: string | null;
@@ -181,7 +184,6 @@ export interface PatientRow {
   name: string;
   phone: string;
   status: PatientStatus | null;
-  total_sessions: number | null;
 }
 
 export interface AppointmentRow {
@@ -195,6 +197,7 @@ export interface AppointmentRow {
   session_number: number | null;
   status: AppointmentStatus | null;
   therapist_id: string;
+  treatment_plan_id: string | null;
 }
 
 export interface AppointmentWithRelations extends AppointmentRow {
@@ -229,6 +232,63 @@ export interface BillingRow {
   sessions_included: number | null;
   sessions_used: number | null;
   status: BillingStatus | null;
+  treatment_plan_id: string | null;
+}
+
+export interface TreatmentPlanRow {
+  id: string;
+  clinic_id: string;
+  patient_id: string;
+  therapist_id: string;
+  diagnosis: string | null;
+  total_sessions: number;
+  completed_sessions: number;
+  status: TreatmentPlanStatus;
+  started_at: string | null;
+  completed_at: string | null;
+  abandoned_at: string | null;
+  notes: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface MessageLogRow {
+  id: string;
+  clinic_id: string;
+  patient_id: string;
+  treatment_plan_id: string | null;
+  appointment_id: string | null;
+  message_type: MessageType;
+  channel: MessageChannel;
+  status: MessageStatus;
+  sent_at: string | null;
+  delivered_at: string | null;
+  error_message: string | null;
+  message_content: string | null;
+  external_message_id: string | null;
+  created_at: string | null;
+}
+
+export interface ClinicSettingsRow {
+  id: string;
+  clinic_id: string;
+  auto_thank_you_enabled: boolean;
+  auto_reminder_enabled: boolean;
+  auto_missed_alert_enabled: boolean;
+  auto_followup_enabled: boolean;
+  thank_you_delay_minutes: number;
+  reminder_hours_before: number;
+  followup_delay_days: number;
+  abandoned_threshold_days: number;
+  thank_you_template: string | null;
+  reminder_template: string | null;
+  missed_template: string | null;
+  followup_template: string | null;
+  default_session_duration_mins: number;
+  currency: string;
+  timezone: string;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface ClientProfileRow {
@@ -325,6 +385,36 @@ export interface Database {
         Relationships: [];
         Row: BillingRow;
         Update: Partial<BillingRow>;
+      };
+      clinic_settings: {
+        Insert: Omit<ClinicSettingsRow, "created_at" | "id" | "updated_at"> & {
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: ClinicSettingsRow;
+        Update: Partial<ClinicSettingsRow>;
+      };
+      message_log: {
+        Insert: Omit<MessageLogRow, "created_at" | "id"> & {
+          created_at?: string | null;
+          id?: string;
+        };
+        Relationships: [];
+        Row: MessageLogRow;
+        Update: Partial<MessageLogRow>;
+      };
+      treatment_plans: {
+        Insert: Omit<TreatmentPlanRow, "completed_sessions" | "created_at" | "id" | "updated_at"> & {
+          completed_sessions?: number;
+          created_at?: string | null;
+          id?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+        Row: TreatmentPlanRow;
+        Update: Partial<TreatmentPlanRow>;
       };
       leads: {
         Insert: Omit<LeadRow, "created_at" | "id" | "updated_at"> & {

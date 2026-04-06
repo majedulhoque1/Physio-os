@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMockClinic } from "@/contexts/MockClinicContext";
-import { getVisibleBilling } from "@/lib/mockClinic";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { BillingRow, BillingStatus, Database, PaymentMethod } from "@/types";
 
@@ -14,6 +12,7 @@ export interface CreateBillingInput {
   payment_method?: PaymentMethod;
   sessions_included?: number | null;
   status?: BillingStatus;
+  treatment_plan_id?: string | null;
 }
 
 interface MutationResult {
@@ -29,44 +28,31 @@ interface UseBillingState {
 type BillingInsert = Database["public"]["Tables"]["billing"]["Insert"];
 
 const SELECT_FIELDS =
-  "id, patient_id, appointment_id, clinic_id, amount, payment_method, status, package_name, sessions_included, sessions_used, paid_at, created_at";
+  "id, patient_id, appointment_id, clinic_id, amount, payment_method, status, package_name, sessions_included, sessions_used, treatment_plan_id, paid_at, created_at";
 
 export function useBilling({ patientId }: { patientId?: string } = {}) {
-  const { can, isDemoMode, role } = useAuth();
-  const {
-    createBillingRecord,
-    data: mockData,
-    markBillingPaid: markMockBillingPaid,
-    updateBillingStatus: updateMockBillingStatus,
-  } = useMockClinic();
+  const { can, clinicId } = useAuth();
   const [state, setState] = useState<UseBillingState>({
     error: null,
     isLoading: true,
     records: [],
   });
 
-  const demoRecords = useMemo(
-    () =>
-      getVisibleBilling(mockData, role)
-        .filter((record) => (patientId ? record.patient_id === patientId : true))
-        .sort((left, right) => (right.created_at ?? "").localeCompare(left.created_at ?? "")),
-    [mockData, role, patientId],
-  );
-
-  async function loadRecords() {
-    if (isDemoMode) {
-      setState({ error: null, isLoading: false, records: demoRecords });
+  const loadRecords = useCallback(async () => {
+    if (!supabase) {
+      setState({ error: supabaseConfigMessage, isLoading: false, records: [] });
       return;
     }
 
-    if (!supabase) {
-      setState({ error: supabaseConfigMessage, isLoading: false, records: [] });
+    if (!clinicId) {
+      setState({ error: "No clinic context", isLoading: false, records: [] });
       return;
     }
 
     let query = supabase
       .from("billing")
       .select(SELECT_FIELDS)
+      .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
       .order("created_at", { ascending: false });
 
     if (patientId) query = query.eq("patient_id", patientId);
@@ -79,27 +65,26 @@ export function useBilling({ patientId }: { patientId?: string } = {}) {
     }
 
     setState({ error: null, isLoading: false, records: (data ?? []) as BillingRow[] });
-  }
+  }, [clinicId, patientId]);
 
   useEffect(() => {
     let isActive = true;
 
     async function initialize() {
-      if (isDemoMode) {
-        if (isActive) {
-          setState({ error: null, isLoading: false, records: demoRecords });
-        }
+      if (!supabase) {
+        if (isActive) setState({ error: supabaseConfigMessage, isLoading: false, records: [] });
         return;
       }
 
-      if (!supabase) {
-        if (isActive) setState({ error: supabaseConfigMessage, isLoading: false, records: [] });
+      if (!clinicId) {
+        if (isActive) setState({ error: "No clinic context", isLoading: false, records: [] });
         return;
       }
 
       let query = supabase
         .from("billing")
         .select(SELECT_FIELDS)
+        .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
         .order("created_at", { ascending: false });
 
       if (patientId) query = query.eq("patient_id", patientId);
@@ -121,96 +106,87 @@ export function useBilling({ patientId }: { patientId?: string } = {}) {
     return () => {
       isActive = false;
     };
-  }, [demoRecords, isDemoMode, patientId]);
+  }, [clinicId, patientId]);
 
-  async function createRecord(input: CreateBillingInput): Promise<MutationResult> {
-    if (!can("manage_billing")) {
-      return { error: "You do not have permission to record payments." };
-    }
+  const createRecord = useCallback(
+    async (input: CreateBillingInput): Promise<MutationResult> => {
+      if (!can("manage_billing")) {
+        return { error: "You do not have permission to record payments." };
+      }
 
-    if (isDemoMode) {
-      createBillingRecord({
+      if (!supabase) return { error: supabaseConfigMessage };
+      if (!clinicId) return { error: "No clinic context" };
+
+      const payload: BillingInsert = {
         amount: input.amount,
         appointment_id: input.appointment_id ?? null,
+        clinic_id: clinicId, // SECURITY: Use clinic from auth context
         package_name: input.package_name ?? null,
         patient_id: input.patient_id,
         payment_method: input.payment_method ?? "cash",
         sessions_included: input.sessions_included ?? null,
+        sessions_used: 0,
         status: input.status ?? "due",
-      });
+        treatment_plan_id: input.treatment_plan_id ?? null,
+      };
 
+      const { error } = await supabase.from("billing").insert(payload as never);
+      if (error) return { error: error.message };
+
+      await loadRecords();
       return { error: null };
-    }
+    },
+    [can, clinicId, loadRecords],
+  );
 
-    if (!supabase) return { error: supabaseConfigMessage };
+  const markAsPaid = useCallback(
+    async (recordId: string): Promise<MutationResult> => {
+      if (!can("manage_billing")) {
+        return { error: "You do not have permission to update billing." };
+      }
 
-    const payload: BillingInsert = {
-      amount: input.amount,
-      appointment_id: input.appointment_id ?? null,
-      clinic_id: input.clinic_id,
-      package_name: input.package_name ?? null,
-      patient_id: input.patient_id,
-      payment_method: input.payment_method ?? "cash",
-      sessions_included: input.sessions_included ?? null,
-      sessions_used: 0,
-      status: input.status ?? "due",
-    };
+      if (!supabase) return { error: supabaseConfigMessage };
+      if (!clinicId) return { error: "No clinic context" };
 
-    const { error } = await supabase.from("billing").insert(payload as never);
-    if (error) return { error: error.message };
+      const { error } = await supabase
+        .from("billing")
+        .update({ status: "paid", paid_at: new Date().toISOString() } as never)
+        .eq("id", recordId)
+        .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
 
-    await loadRecords();
-    return { error: null };
-  }
+      if (error) return { error: error.message };
 
-  async function markAsPaid(recordId: string): Promise<MutationResult> {
-    if (!can("manage_billing")) {
-      return { error: "You do not have permission to update billing." };
-    }
-
-    if (isDemoMode) {
-      markMockBillingPaid(recordId);
+      await loadRecords();
       return { error: null };
-    }
+    },
+    [can, clinicId, loadRecords],
+  );
 
-    if (!supabase) return { error: supabaseConfigMessage };
+  const updateStatus = useCallback(
+    async (recordId: string, status: BillingStatus): Promise<MutationResult> => {
+      if (!can("manage_billing")) {
+        return { error: "You do not have permission to update billing." };
+      }
 
-    const { error } = await supabase
-      .from("billing")
-      .update({ status: "paid", paid_at: new Date().toISOString() } as never)
-      .eq("id", recordId);
+      if (!supabase) return { error: supabaseConfigMessage };
+      if (!clinicId) return { error: "No clinic context" };
 
-    if (error) return { error: error.message };
+      const update: Partial<BillingRow> = { status };
+      if (status === "paid") update.paid_at = new Date().toISOString();
 
-    await loadRecords();
-    return { error: null };
-  }
+      const { error } = await supabase
+        .from("billing")
+        .update(update as never)
+        .eq("id", recordId)
+        .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
 
-  async function updateStatus(recordId: string, status: BillingStatus): Promise<MutationResult> {
-    if (!can("manage_billing")) {
-      return { error: "You do not have permission to update billing." };
-    }
+      if (error) return { error: error.message };
 
-    if (isDemoMode) {
-      updateMockBillingStatus(recordId, status);
+      await loadRecords();
       return { error: null };
-    }
-
-    if (!supabase) return { error: supabaseConfigMessage };
-
-    const update: Partial<BillingRow> = { status };
-    if (status === "paid") update.paid_at = new Date().toISOString();
-
-    const { error } = await supabase
-      .from("billing")
-      .update(update as never)
-      .eq("id", recordId);
-
-    if (error) return { error: error.message };
-
-    await loadRecords();
-    return { error: null };
-  }
+    },
+    [can, clinicId, loadRecords],
+  );
 
   const totalRevenue = state.records
     .filter((r) => r.status === "paid")

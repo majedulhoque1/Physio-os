@@ -11,14 +11,12 @@ export interface CreatePatientInput {
   name: string;
   phone: string;
   status?: PatientStatus;
-  total_sessions?: number | null;
 }
 
 export interface PatientMutationInput {
   assigned_therapist?: string | null;
   diagnosis?: string | null;
   status?: PatientStatus;
-  total_sessions?: number | null;
 }
 
 interface PatientMutationResult {
@@ -80,7 +78,7 @@ export function usePatients() {
 
     let query = supabase
       .from("patients")
-      .select("id, clinic_id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, total_sessions, completed_sessions, status, created_at")
+      .select("id, clinic_id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, status, created_at")
       .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
       .order("created_at", { ascending: false });
 
@@ -96,14 +94,15 @@ export function usePatients() {
     }
 
     // SECURITY: Filter by role on client (in addition to RLS on server)
+    const typed = (data ?? []) as PatientRow[];
     const filtered = role === "therapist" && linkedTherapistId
-      ? (data ?? []).filter(p => p.assigned_therapist === linkedTherapistId)
-      : (data ?? []);
+      ? typed.filter(p => p.assigned_therapist === linkedTherapistId)
+      : typed;
 
     setState({
       error: null,
       isLoading: false,
-      patients: (filtered as PatientRow[]),
+      patients: filtered,
     });
   }, [clinicId, linkedTherapistId, role]);
 
@@ -135,7 +134,7 @@ export function usePatients() {
 
       let query = supabase
         .from("patients")
-        .select("id, clinic_id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, total_sessions, completed_sessions, status, created_at")
+        .select("id, clinic_id, lead_id, name, phone, age, gender, diagnosis, assigned_therapist, status, created_at")
         .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
         .order("created_at", { ascending: false });
 
@@ -153,14 +152,15 @@ export function usePatients() {
       }
 
       // SECURITY: Filter by role on client
+      const typed = (data ?? []) as PatientRow[];
       const filtered = role === "therapist" && linkedTherapistId
-        ? (data ?? []).filter(p => p.assigned_therapist === linkedTherapistId)
-        : (data ?? []);
+        ? typed.filter(p => p.assigned_therapist === linkedTherapistId)
+        : typed;
 
       setState({
         error: null,
         isLoading: false,
-        patients: (filtered as PatientRow[]),
+        patients: filtered,
       });
     }
 
@@ -187,10 +187,10 @@ export function usePatients() {
         assigned_therapist: input.assigned_therapist ?? null,
         diagnosis: normalizeOptionalText(input.diagnosis),
         gender: normalizeOptionalText(input.gender),
+        lead_id: null,
         name: input.name.trim(),
         phone: input.phone.trim(),
         status: input.status ?? "active",
-        total_sessions: input.total_sessions ?? null,
       };
 
       const { data, error } = await supabase
@@ -221,7 +221,6 @@ export function usePatients() {
         assigned_therapist: input.assigned_therapist ?? null,
         diagnosis: normalizeOptionalText(input.diagnosis),
         status: input.status,
-        total_sessions: input.total_sessions,
       };
 
       const { error } = await supabase

@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMockClinic } from "@/contexts/MockClinicContext";
-import { getVisibleSessionNotes } from "@/lib/mockClinic";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { Database, SessionNoteRow } from "@/types";
 
@@ -39,35 +37,29 @@ export function useSessionNotes({
   appointmentId?: string;
   patientId?: string;
 } = {}) {
-  const { can, isDemoMode, linkedTherapistId, role } = useAuth();
-  const { createSessionNote: createMockSessionNote, data: mockData } = useMockClinic();
+  const { can, clinicId, linkedTherapistId, role } = useAuth();
   const [state, setState] = useState<UseSessionNotesState>({
     error: null,
     isLoading: true,
     notes: [],
   });
 
-  const demoNotes = useMemo(
-    () =>
-      getVisibleSessionNotes(mockData, role, linkedTherapistId)
-        .filter((note) => (patientId ? note.patient_id === patientId : true))
-        .filter((note) => (appointmentId ? note.appointment_id === appointmentId : true))
-        .sort((left, right) => (right.created_at ?? "").localeCompare(left.created_at ?? "")),
-    [mockData, role, linkedTherapistId, patientId, appointmentId],
-  );
-
-  async function loadNotes() {
-    if (isDemoMode) {
-      setState({ error: null, isLoading: false, notes: demoNotes });
-      return;
-    }
-
+  const loadNotes = useCallback(async () => {
     if (!supabase) {
       setState({ error: supabaseConfigMessage, isLoading: false, notes: [] });
       return;
     }
 
-    let query = supabase.from("session_notes").select(SELECT_FIELDS).order("created_at", { ascending: false });
+    if (!clinicId) {
+      setState({ error: "No clinic context", isLoading: false, notes: [] });
+      return;
+    }
+
+    let query = supabase
+      .from("session_notes")
+      .select(SELECT_FIELDS)
+      .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
+      .order("created_at", { ascending: false });
 
     if (patientId) query = query.eq("patient_id", patientId);
     if (appointmentId) query = query.eq("appointment_id", appointmentId);
@@ -79,26 +71,34 @@ export function useSessionNotes({
       return;
     }
 
-    setState({ error: null, isLoading: false, notes: (data ?? []) as SessionNoteRow[] });
-  }
+    // SECURITY: Filter by role on client (therapist sees only own notes)
+    const typed = (data ?? []) as SessionNoteRow[];
+    const filtered = role === "therapist" && linkedTherapistId
+      ? typed.filter(n => n.therapist_id === linkedTherapistId)
+      : typed;
+
+    setState({ error: null, isLoading: false, notes: filtered });
+  }, [appointmentId, clinicId, linkedTherapistId, patientId, role]);
 
   useEffect(() => {
     let isActive = true;
 
     async function initialize() {
-      if (isDemoMode) {
-        if (isActive) {
-          setState({ error: null, isLoading: false, notes: demoNotes });
-        }
-        return;
-      }
-
       if (!supabase) {
         if (isActive) setState({ error: supabaseConfigMessage, isLoading: false, notes: [] });
         return;
       }
 
-      let query = supabase.from("session_notes").select(SELECT_FIELDS).order("created_at", { ascending: false });
+      if (!clinicId) {
+        if (isActive) setState({ error: "No clinic context", isLoading: false, notes: [] });
+        return;
+      }
+
+      let query = supabase
+        .from("session_notes")
+        .select(SELECT_FIELDS)
+        .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
+        .order("created_at", { ascending: false });
 
       if (patientId) query = query.eq("patient_id", patientId);
       if (appointmentId) query = query.eq("appointment_id", appointmentId);
@@ -112,7 +112,13 @@ export function useSessionNotes({
         return;
       }
 
-      setState({ error: null, isLoading: false, notes: (data ?? []) as SessionNoteRow[] });
+      // SECURITY: Filter by role on client (therapist sees only own notes)
+      const typed = (data ?? []) as SessionNoteRow[];
+      const filtered = role === "therapist" && linkedTherapistId
+        ? typed.filter(n => n.therapist_id === linkedTherapistId)
+        : typed;
+
+      setState({ error: null, isLoading: false, notes: filtered });
     }
 
     initialize();
@@ -120,21 +126,25 @@ export function useSessionNotes({
     return () => {
       isActive = false;
     };
-  }, [appointmentId, demoNotes, isDemoMode, patientId]);
+  }, [appointmentId, clinicId, linkedTherapistId, patientId, role]);
 
-  async function createNote(input: CreateSessionNoteInput): Promise<MutationResult> {
-    if (!can("record_session_notes")) {
-      return { error: "You do not have permission to record session notes." };
-    }
+  const createNote = useCallback(
+    async (input: CreateSessionNoteInput): Promise<MutationResult> => {
+      if (!can("record_session_notes")) {
+        return { error: "You do not have permission to record session notes." };
+      }
 
-    if (isDemoMode) {
-      if (role === "therapist" && input.therapist_id !== linkedTherapistId) {
+      if (!supabase) return { error: supabaseConfigMessage };
+      if (!clinicId) return { error: "No clinic context" };
+
+      // SECURITY: Therapists can only record notes for their own sessions
+      if (role === "therapist" && linkedTherapistId && input.therapist_id !== linkedTherapistId) {
         return { error: "Therapists can only record notes for their own sessions." };
       }
 
-      createMockSessionNote({
+      const payload: SessionNoteInsert = {
         appointment_id: input.appointment_id,
-        clinic_id: input.clinic_id,
+        clinic_id: clinicId, // SECURITY: Use clinic from auth context
         exercises_done: input.exercises_done ?? null,
         mobility_score: input.mobility_score ?? null,
         next_plan: input.next_plan ?? null,
@@ -142,31 +152,16 @@ export function useSessionNotes({
         patient_id: input.patient_id,
         progress_notes: input.progress_notes ?? null,
         therapist_id: input.therapist_id,
-      });
+      };
 
+      const { error } = await supabase.from("session_notes").insert(payload as never);
+      if (error) return { error: error.message };
+
+      await loadNotes();
       return { error: null };
-    }
-
-    if (!supabase) return { error: supabaseConfigMessage };
-
-    const payload: SessionNoteInsert = {
-      appointment_id: input.appointment_id,
-      clinic_id: input.clinic_id,
-      exercises_done: input.exercises_done ?? null,
-      mobility_score: input.mobility_score ?? null,
-      next_plan: input.next_plan ?? null,
-      pain_scale: input.pain_scale ?? null,
-      patient_id: input.patient_id,
-      progress_notes: input.progress_notes ?? null,
-      therapist_id: input.therapist_id,
-    };
-
-    const { error } = await supabase.from("session_notes").insert(payload as never);
-    if (error) return { error: error.message };
-
-    await loadNotes();
-    return { error: null };
-  }
+    },
+    [can, clinicId, linkedTherapistId, loadNotes, role],
+  );
 
   return { ...state, createNote, refreshNotes: loadNotes };
 }

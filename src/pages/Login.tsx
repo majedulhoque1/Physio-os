@@ -1,6 +1,6 @@
 import { Activity } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function Login() {
@@ -91,11 +91,8 @@ export function Login() {
           </form>
         </div>
 
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          New clinic?{" "}
-          <Link to="/register" className="font-medium text-primary hover:underline">
-            Create an account
-          </Link>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Staff accounts are created by your clinic admin.
         </p>
       </div>
     </div>

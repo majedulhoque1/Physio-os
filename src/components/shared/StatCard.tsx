@@ -1,7 +1,7 @@
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type AccentColor = "indigo" | "emerald" | "blue" | "red";
+type AccentColor = "indigo" | "emerald" | "blue" | "red" | "green" | "orange";
 
 interface StatCardProps {
   label: string;
@@ -34,6 +34,16 @@ const accentStyles: Record<AccentColor, { border: string; iconBg: string; iconTe
     border: "border-t-red-500",
     iconBg: "bg-red-50",
     iconText: "text-red-500",
+  },
+  green: {
+    border: "border-t-green-500",
+    iconBg: "bg-green-50",
+    iconText: "text-green-500",
+  },
+  orange: {
+    border: "border-t-orange-500",
+    iconBg: "bg-orange-50",
+    iconText: "text-orange-500",
   },
 };
 

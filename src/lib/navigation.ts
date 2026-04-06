@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CreditCard,
   LayoutDashboard,
+  Mail,
   Settings,
   Stethoscope,
   Users,
@@ -53,6 +54,13 @@ const baseDesktopNavItems: NavItem[] = [
     label: "Analytics",
     title: "Analytics",
     breadcrumbs: ["Clinic", "Analytics"],
+  },
+  {
+    href: "/messages",
+    icon: Mail,
+    label: "Messages",
+    title: "Message Log",
+    breadcrumbs: ["Clinic", "Messages"],
   },
 ];
 

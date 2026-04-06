@@ -39,7 +39,7 @@ export function ReceptionistDashboard() {
           trend="0%"
           trendDirection="down"
           icon={AlertTriangle}
-          accentColor="amber"
+          accentColor="orange"
         />
         <StatCard
           label="New Leads This Week"
@@ -55,7 +55,7 @@ export function ReceptionistDashboard() {
           trend="0%"
           trendDirection="down"
           icon={Users}
-          accentColor="orange"
+          accentColor="emerald"
         />
       </section>
 

@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarPlus, ClipboardList, Phone, User } from "lucide-react";
+import { ArrowLeft, CalendarPlus, ClipboardList, Pause, Phone, Play, User, X as XIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BookAppointmentModal, type AppointmentFormValues } from "@/components/shared/BookAppointmentModal";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppointments } from "@/hooks/useAppointments";
 import { usePatients } from "@/hooks/usePatients";
 import { useSessionNotes, type CreateSessionNoteInput } from "@/hooks/useSessionNotes";
+import { useTreatmentPlans } from "@/hooks/useTreatmentPlans";
 import { useTherapists } from "@/hooks/useTherapists";
 import { formatDate, formatTime } from "@/lib/utils";
 import type {
@@ -18,6 +19,8 @@ import type {
   PatientStatus,
   SessionNoteRow,
   StatusTone,
+  TreatmentPlanRow,
+  TreatmentPlanStatus,
 } from "@/types";
 
 function getPatientStatusTone(status: PatientStatus | null): StatusTone {
@@ -50,6 +53,21 @@ function getAppointmentStatusTone(status: AppointmentStatus | null): StatusTone 
   }
 }
 
+function getPlanStatusTone(status: TreatmentPlanStatus): StatusTone {
+  switch (status) {
+    case "active":
+      return "green";
+    case "completed":
+      return "blue";
+    case "abandoned":
+      return "red";
+    case "paused":
+      return "yellow";
+    default:
+      return "gray";
+  }
+}
+
 function SessionProgress({ completed, total }: { completed: number; total: number }) {
   const pct = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
@@ -66,6 +84,72 @@ function SessionProgress({ completed, total }: { completed: number; total: numbe
           className="h-full rounded-full bg-primary transition-all"
           style={{ width: `${pct}%` }}
         />
+      </div>
+    </div>
+  );
+}
+
+function TreatmentPlanCard({
+  plan,
+  therapistName,
+  canManage,
+  onStatusChange,
+}: {
+  plan: TreatmentPlanRow;
+  therapistName: string;
+  canManage: boolean;
+  onStatusChange: (planId: string, status: TreatmentPlanStatus) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <StatusBadge label={plan.status} tone={getPlanStatusTone(plan.status)} />
+          {plan.diagnosis ? (
+            <span className="text-sm text-muted-foreground">{plan.diagnosis}</span>
+          ) : null}
+        </div>
+        {canManage && plan.status === "active" ? (
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => onStatusChange(plan.id, "paused")}
+              title="Pause plan"
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+            >
+              <Pause className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onStatusChange(plan.id, "abandoned")}
+              title="Abandon plan"
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-danger"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : null}
+        {canManage && plan.status === "paused" ? (
+          <button
+            type="button"
+            onClick={() => onStatusChange(plan.id, "active")}
+            title="Resume plan"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-slate-100 hover:text-foreground"
+          >
+            <Play className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-3">
+        <SessionProgress completed={plan.completed_sessions} total={plan.total_sessions} />
+      </div>
+
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>Therapist: {therapistName}</span>
+        {plan.started_at ? (
+          <span>Started {formatDate(plan.started_at)}</span>
+        ) : null}
       </div>
     </div>
   );
@@ -172,6 +256,12 @@ export function PatientProfile() {
   } = usePatients();
   const { therapists } = useTherapists();
   const { notes, createNote } = useSessionNotes({ patientId: id });
+  const {
+    plans,
+    activePlan,
+    isLoading: plansLoading,
+    updatePlanStatus,
+  } = useTreatmentPlans(id ? { patientId: id } : {});
 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -328,14 +418,64 @@ export function PatientProfile() {
 
         <div className="rounded-lg border border-border bg-surface p-5 shadow-card sm:col-span-2 lg:col-span-1">
           <p className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            Progress
+            Active Plan
           </p>
-          <SessionProgress
-            completed={patient.completed_sessions ?? 0}
-            total={patient.total_sessions ?? 0}
-          />
+          {plansLoading ? (
+            <div className="h-12 animate-pulse rounded-lg bg-slate-100" />
+          ) : activePlan ? (
+            <SessionProgress
+              completed={activePlan.completed_sessions}
+              total={activePlan.total_sessions}
+            />
+          ) : (
+            <p className="text-sm text-muted-foreground">No active treatment plan</p>
+          )}
         </div>
       </div>
+
+      {/* Treatment Plans */}
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Treatment Plans
+        </h3>
+
+        {plansLoading ? (
+          <div className="space-y-2">
+            {[0, 1].map((i) => (
+              <div key={i} className="h-24 animate-pulse rounded-lg bg-slate-100" />
+            ))}
+          </div>
+        ) : plans.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-surface px-4 py-6 text-center">
+            <p className="text-sm font-semibold text-foreground">No treatment plans</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create a treatment plan to track session progress.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {plans.map((plan) => {
+              const therapist = therapists.find((t) => t.id === plan.therapist_id);
+              return (
+                <TreatmentPlanCard
+                  key={plan.id}
+                  plan={plan}
+                  therapistName={therapist?.name ?? "Unassigned"}
+                  canManage={can("manage_patients")}
+                  onStatusChange={async (planId, status) => {
+                    const result = await updatePlanStatus(planId, status);
+                    if (result.error) {
+                      toast({ title: "Could not update plan", description: result.error, variant: "error" });
+                    } else {
+                      toast({ title: `Plan ${status}`, variant: "success" });
+                    }
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

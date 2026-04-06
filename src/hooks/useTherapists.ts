@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useMockClinic } from "@/contexts/MockClinicContext";
-import { getVisibleTherapists } from "@/lib/mockClinic";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { Database, TherapistRow, TherapistStatus } from "@/types";
 
@@ -57,52 +55,28 @@ function sortTherapists(items: TherapistRow[]) {
 
 /**
  * SECURITY PATTERN: Multi-Tenant Therapist Hook
- * 
+ *
  * 1. All Supabase queries filter by clinic_id
  * 2. RLS policies enforced server-side
  * 3. Only clinic_admin can create/update therapists
  * 4. All mutations enforce clinic context
  */
 export function useTherapists() {
-  const { can, clinicId, isDemoMode } = useAuth();
-  const {
-    createTherapist: createMockTherapist,
-    data: mockData,
-    updateTherapist: updateMockTherapist,
-  } = useMockClinic();
+  const { can, clinicId } = useAuth();
   const [state, setState] = useState<UseTherapistsState>({
     error: null,
     isLoading: true,
     therapists: [],
   });
 
-  const demoTherapists = useMemo(() => sortTherapists(getVisibleTherapists(mockData)), [mockData]);
-
   const loadTherapists = useCallback(async () => {
-    if (isDemoMode) {
-      setState({
-        error: null,
-        isLoading: false,
-        therapists: demoTherapists,
-      });
-      return;
-    }
-
     if (!supabase) {
-      setState({
-        error: supabaseConfigMessage,
-        isLoading: false,
-        therapists: [],
-      });
+      setState({ error: supabaseConfigMessage, isLoading: false, therapists: [] });
       return;
     }
 
     if (!clinicId) {
-      setState({
-        error: "No clinic context",
-        isLoading: false,
-        therapists: [],
-      });
+      setState({ error: "No clinic context", isLoading: false, therapists: [] });
       return;
     }
 
@@ -113,11 +87,7 @@ export function useTherapists() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      setState({
-        error: error.message,
-        isLoading: false,
-        therapists: [],
-      });
+      setState({ error: error.message, isLoading: false, therapists: [] });
       return;
     }
 
@@ -126,42 +96,19 @@ export function useTherapists() {
       isLoading: false,
       therapists: sortTherapists((data ?? []) as TherapistRow[]),
     });
-  }, [clinicId, isDemoMode, demoTherapists]);
+  }, [clinicId]);
 
   useEffect(() => {
     let isActive = true;
 
     async function initialize() {
-      if (isDemoMode) {
-        if (isActive) {
-          setState({
-            error: null,
-            isLoading: false,
-            therapists: demoTherapists,
-          });
-        }
-        return;
-      }
-
       if (!supabase) {
-        if (isActive) {
-          setState({
-            error: supabaseConfigMessage,
-            isLoading: false,
-            therapists: [],
-          });
-        }
+        if (isActive) setState({ error: supabaseConfigMessage, isLoading: false, therapists: [] });
         return;
       }
 
       if (!clinicId) {
-        if (isActive) {
-          setState({
-            error: "No clinic context",
-            isLoading: false,
-            therapists: [],
-          });
-        }
+        if (isActive) setState({ error: "No clinic context", isLoading: false, therapists: [] });
         return;
       }
 
@@ -174,11 +121,7 @@ export function useTherapists() {
       if (!isActive) return;
 
       if (error) {
-        setState({
-          error: error.message,
-          isLoading: false,
-          therapists: [],
-        });
+        setState({ error: error.message, isLoading: false, therapists: [] });
         return;
       }
 
@@ -194,36 +137,16 @@ export function useTherapists() {
     return () => {
       isActive = false;
     };
-  }, [clinicId, isDemoMode, demoTherapists]);
+  }, [clinicId]);
 
   const createTherapist = useCallback(
     async (input: CreateTherapistInput): Promise<TherapistMutationResult> => {
-      // SECURITY: Permission check (only admin)
       if (!can("manage_therapists")) {
-        return {
-          error: "You do not have permission to create therapists.",
-          therapistId: null,
-        };
+        return { error: "You do not have permission to create therapists.", therapistId: null };
       }
 
-      if (isDemoMode) {
-        const id = createMockTherapist({
-          name: input.name.trim(),
-          phone: normalizeOptionalText(input.phone),
-          specialization: normalizeOptionalText(input.specialization),
-          status: input.status ?? "active",
-        });
-
-        return { error: null, therapistId: id };
-      }
-
-      if (!supabase) {
-        return { error: supabaseConfigMessage, therapistId: null };
-      }
-
-      if (!clinicId) {
-        return { error: "No clinic context", therapistId: null };
-      }
+      if (!supabase) return { error: supabaseConfigMessage, therapistId: null };
+      if (!clinicId) return { error: "No clinic context", therapistId: null };
 
       const payload: TherapistInsert = {
         clinic_id: clinicId, // SECURITY: Explicit clinic_id
@@ -239,44 +162,22 @@ export function useTherapists() {
         .select("id")
         .maybeSingle();
 
-      if (error) {
-        return { error: error.message, therapistId: null };
-      }
+      if (error) return { error: error.message, therapistId: null };
 
       await loadTherapists();
       return { error: null, therapistId: (data as any)?.id ?? null };
     },
-    [can, clinicId, createMockTherapist, isDemoMode, loadTherapists],
+    [can, clinicId, loadTherapists],
   );
 
   const updateTherapist = useCallback(
     async (therapistId: string, input: TherapistMutationInput): Promise<TherapistMutationResult> => {
-      // SECURITY: Permission check
       if (!can("manage_therapists")) {
-        return {
-          error: "You do not have permission to update therapists.",
-          therapistId: null,
-        };
+        return { error: "You do not have permission to update therapists.", therapistId: null };
       }
 
-      if (isDemoMode) {
-        updateMockTherapist(therapistId, {
-          name: input.name,
-          phone: normalizeOptionalText(input.phone),
-          specialization: normalizeOptionalText(input.specialization),
-          status: input.status,
-        });
-
-        return { error: null, therapistId };
-      }
-
-      if (!supabase) {
-        return { error: supabaseConfigMessage, therapistId: null };
-      }
-
-      if (!clinicId) {
-        return { error: "No clinic context", therapistId: null };
-      }
+      if (!supabase) return { error: supabaseConfigMessage, therapistId: null };
+      if (!clinicId) return { error: "No clinic context", therapistId: null };
 
       const payload: TherapistUpdate = {
         name: input.name,
@@ -291,14 +192,12 @@ export function useTherapists() {
         .eq("id", therapistId)
         .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
 
-      if (error) {
-        return { error: error.message, therapistId: null };
-      }
+      if (error) return { error: error.message, therapistId: null };
 
       await loadTherapists();
       return { error: null, therapistId };
     },
-    [can, clinicId, isDemoMode, loadTherapists],
+    [can, clinicId, loadTherapists],
   );
 
   return {

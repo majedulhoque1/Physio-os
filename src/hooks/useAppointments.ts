@@ -15,6 +15,7 @@ export interface AppointmentMutationInput {
   session_number?: number | null;
   status?: AppointmentStatus;
   therapist_id: string;
+  treatment_plan_id?: string | null;
 }
 
 interface AppointmentMutationResult {
@@ -31,7 +32,7 @@ type AppointmentInsert = Database["public"]["Tables"]["appointments"]["Insert"];
 type AppointmentUpdate = Database["public"]["Tables"]["appointments"]["Update"];
 
 const SELECT_FIELDS =
-  "id, clinic_id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, created_at, patients(name, phone), therapists(name)";
+  "id, clinic_id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patients(name, phone), therapists(name)";
 
 /**
  * SECURITY PATTERN: Multi-Tenant Appointment Hook
@@ -80,12 +81,13 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
     }
 
     // SECURITY: Filter by role on client (therapist sees only own, admin/receptionist see all)
+    const typed = (data ?? []) as AppointmentWithRelations[];
     const filtered = role === "therapist" && linkedTherapistId
-      ? (data ?? []).filter(apt => apt.therapist_id === linkedTherapistId)
-      : (data ?? []);
+      ? typed.filter(apt => apt.therapist_id === linkedTherapistId)
+      : typed;
 
     setState({
-      appointments: (filtered as AppointmentWithRelations[]),
+      appointments: filtered,
       error: null,
       isLoading: false,
     });
@@ -129,12 +131,13 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
       }
 
       // SECURITY: Filter by role on client (therapist sees only own, admin/receptionist see all)
+      const typed = (data ?? []) as AppointmentWithRelations[];
       const filtered = role === "therapist" && linkedTherapistId
-        ? (data ?? []).filter(apt => apt.therapist_id === linkedTherapistId)
-        : (data ?? []);
+        ? typed.filter(apt => apt.therapist_id === linkedTherapistId)
+        : typed;
 
       setState({
-        appointments: (filtered as AppointmentWithRelations[]),
+        appointments: filtered,
         error: null,
         isLoading: false,
       });
@@ -166,6 +169,7 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
         session_number: input.session_number ?? null,
         status: input.status ?? "scheduled",
         therapist_id: input.therapist_id,
+        treatment_plan_id: input.treatment_plan_id ?? null,
       };
 
       const { error } = await supabase.from("appointments").insert(payload as never);
@@ -189,13 +193,14 @@ export function useAppointments({ patientId }: UseAppointmentsOptions = {}) {
 
       // SECURITY: For therapists, verify they own the appointment before updating
       if (role === "therapist" && linkedTherapistId) {
-        const { data: apt } = await supabase
+        const { data } = await supabase
           .from("appointments")
           .select("therapist_id")
           .eq("id", appointmentId)
           .eq("clinic_id", clinicId)
           .maybeSingle();
 
+        const apt = data as { therapist_id: string } | null;
         if (!apt || apt.therapist_id !== linkedTherapistId) {
           return { error: "You can only update your own appointments." };
         }

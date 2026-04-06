@@ -240,14 +240,12 @@ export function useLeads() {
     const patientPayload: PatientInsert = {
       age: null,
       assigned_therapist: lead.assigned_to,
-      completed_sessions: 0,
       diagnosis: normalizeOptionalText(lead.condition),
       gender: null,
       lead_id: lead.id,
       name: lead.name,
       phone: lead.phone,
       status: "active",
-      total_sessions: 0,
     };
 
     const insertPatientResponse = await supabase
