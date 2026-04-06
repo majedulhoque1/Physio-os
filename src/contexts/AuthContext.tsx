@@ -107,7 +107,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLinkedTherapistId(null);
     }
 
-    setAuthMode("supabase");
   }
 
   useEffect(() => {

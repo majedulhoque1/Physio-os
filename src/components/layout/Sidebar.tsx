@@ -50,6 +50,7 @@ function getInitials(name: string | null | undefined) {
 
 export function Sidebar() {
   const { clinic, displayName, role, signOut, user } = useAuth();
+  if (!user) return null;
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
   const desktopNavItems = getDesktopNavItems(role);
