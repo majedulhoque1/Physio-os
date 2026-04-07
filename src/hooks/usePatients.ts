@@ -237,9 +237,34 @@ export function usePatients() {
     [can, clinicId, loadPatients],
   );
 
+  const deletePatient = useCallback(
+    async (patientId: string): Promise<PatientMutationResult> => {
+      // SECURITY: Permission check - only admin can delete
+      if (!can("manage_patients")) {
+        return { error: "You do not have permission to delete patients.", patientId: null };
+      }
+
+      if (!supabase) return { error: supabaseConfigMessage, patientId: null };
+      if (!clinicId) return { error: "No clinic context", patientId: null };
+
+      const { error } = await supabase
+        .from("patients")
+        .delete()
+        .eq("id", patientId)
+        .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
+
+      if (error) return { error: error.message, patientId: null };
+
+      await loadPatients();
+      return { error: null, patientId };
+    },
+    [can, clinicId, loadPatients],
+  );
+
   return {
     ...state,
     createPatient,
+    deletePatient,
     refreshPatients: loadPatients,
     updatePatient,
   };

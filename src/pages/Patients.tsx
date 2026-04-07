@@ -4,6 +4,7 @@ import {
   CalendarPlus,
   Phone,
   Search,
+  Trash2,
   UserPlus,
   Users,
   X,
@@ -89,24 +90,32 @@ type PatientEditValues = z.output<typeof patientEditSchema>;
 
 function PatientDetailDrawer({
   canBookAppointments,
+  canDelete,
   canEdit,
+  isDeleting,
   isSaving,
   onBookAppointment,
   onClose,
+  onDelete,
   onSubmit,
   patient,
   therapists,
 }: {
   canBookAppointments: boolean;
+  canDelete: boolean;
   canEdit: boolean;
+  isDeleting: boolean;
   isSaving: boolean;
   onBookAppointment: () => void;
   onClose: () => void;
+  onDelete: (patientId: string) => Promise<void>;
   onSubmit: (patientId: string, values: PatientEditValues) => Promise<void>;
   patient: PatientRow | null;
   therapists: TherapistRow[];
 }) {
   const navigate = useNavigate();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const {
     handleSubmit,
     register,
@@ -250,7 +259,57 @@ function PatientDetailDrawer({
                 Book Appointment
               </button>
             ) : null}
+            {canDelete ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={isDeleting}
+                className={cn(
+                  actionButtonClassName("secondary"),
+                  "flex-1 text-danger hover:bg-danger/10"
+                )}
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            ) : null}
           </div>
+
+          {/* Delete confirmation */}
+          {showDeleteConfirm ? (
+            <div className="mt-4 rounded-lg border border-danger/20 bg-danger/5 p-4">
+              <p className="text-sm font-semibold text-foreground">
+                Delete patient record?
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                This will permanently delete {patient.name} and all associated data. This action cannot be undone.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className={actionButtonClassName("secondary")}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await onDelete(patient.id);
+                    setShowDeleteConfirm(false);
+                  }}
+                  disabled={isDeleting}
+                  className={cn(
+                    actionButtonClassName("primary"),
+                    "bg-danger text-white hover:bg-danger/90"
+                  )}
+                >
+                  {isDeleting ? "Deleting..." : "Delete Permanently"}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         <div className="border-t border-border px-5 py-4">
@@ -401,6 +460,7 @@ export function Patients() {
   const { can } = useAuth();
   const {
     createPatient,
+    deletePatient,
     patients,
     error: patientsError,
     isLoading: patientsLoading,
@@ -421,6 +481,7 @@ export function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [isSavingAppointment, setIsSavingAppointment] = useState(false);
 
@@ -525,6 +586,29 @@ export function Patients() {
     toast({
       title: "Patient updated",
       description: "Changes saved successfully.",
+      variant: "success",
+    });
+  }
+
+  async function handleDeletePatient(patientId: string) {
+    setIsDeleting(true);
+
+    const result = await deletePatient(patientId);
+    setIsDeleting(false);
+
+    if (result.error) {
+      toast({
+        title: "Could not delete patient",
+        description: result.error,
+        variant: "error",
+      });
+      return;
+    }
+
+    setSelectedPatientId(null);
+    toast({
+      title: "Patient deleted",
+      description: "Patient record has been permanently removed.",
       variant: "success",
     });
   }
@@ -746,9 +830,12 @@ export function Patients() {
         therapists={therapists}
         canBookAppointments={canManageAppointments}
         canEdit={canManagePatients}
+        canDelete={canManagePatients}
         isSaving={isSaving}
+        isDeleting={isDeleting}
         onClose={() => setSelectedPatientId(null)}
         onSubmit={handleSavePatient}
+        onDelete={handleDeletePatient}
         onBookAppointment={() => setIsBookModalOpen(true)}
       />
 
