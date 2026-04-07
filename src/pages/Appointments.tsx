@@ -88,7 +88,7 @@ function AppointmentRow({
   const status = appointment.status ?? "scheduled";
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-sm sm:flex-row sm:items-center sm:gap-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-white p-4 shadow-card transition-shadow hover:shadow-elevated sm:flex-row sm:items-center sm:gap-4">
       <div className="shrink-0 text-center sm:w-20">
         <p className="text-lg font-semibold text-foreground tabular-nums">
           {formatTime(appointment.scheduled_at)}
@@ -99,7 +99,7 @@ function AppointmentRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-foreground">{patientName}</p>
+        <p className="truncate text-sm font-semibold text-foreground">{patientName}</p>
         <p className="mt-0.5 truncate text-sm text-muted-foreground">{therapistName}</p>
         {appointment.session_number ? (
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -118,7 +118,7 @@ function AppointmentRow({
         <select
           value={status}
           onChange={(e) => onStatusChange(appointment.id, e.target.value as AppointmentStatus)}
-          className="rounded-lg border border-border bg-surface px-2 py-1.5 text-xs text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
+          className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/10"
         >
           {statusOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -140,7 +140,7 @@ function AppointmentsSkeleton() {
           {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className="flex gap-4 rounded-lg border border-border bg-surface p-4"
+              className="flex gap-4 rounded-xl border border-border bg-white p-4"
             >
               <div className="h-12 w-20 animate-pulse rounded bg-slate-200" />
               <div className="flex-1 space-y-2">
@@ -221,7 +221,7 @@ export function Appointments() {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary/90 active:scale-[0.98]"
           >
             <CalendarPlus className="h-4 w-4" />
             Book Appointment
@@ -230,13 +230,13 @@ export function Appointments() {
       />
 
       {error ? (
-        <section className="rounded-lg border border-danger/20 bg-danger/5 p-4 shadow-card">
+        <section className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-card">
           <p className="text-sm font-semibold text-foreground">Failed to load appointments</p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">{error}</p>
         </section>
       ) : null}
 
-      <div className="flex gap-1 rounded-lg border border-border bg-surface p-1 shadow-card">
+      <div className="flex gap-1 rounded-xl border border-border bg-white p-1 shadow-card">
         {tabs.map((tab) => {
           const count =
             tab.key === "all"

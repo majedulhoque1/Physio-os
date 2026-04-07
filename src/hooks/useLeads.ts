@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import type { Database, LeadRow, LeadSource, LeadStatus } from "@/types";
 
@@ -36,14 +37,22 @@ function normalizeOptionalText(value?: string | null) {
   return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
+/**
+ * SECURITY PATTERN: Multi-Tenant Lead Hook
+ *
+ * 1. All Supabase queries filter by clinic_id from auth context
+ * 2. RLS policies enforced server-side
+ * 3. Mutations enforce clinic context
+ */
 export function useLeads() {
+  const { clinicId } = useAuth();
   const [state, setState] = useState<UseLeadsState>({
     error: null,
     isLoading: true,
     leads: [],
   });
 
-  async function loadLeads() {
+  const loadLeads = useCallback(async () => {
     if (!supabase) {
       setState({
         error: supabaseConfigMessage,
@@ -53,9 +62,19 @@ export function useLeads() {
       return;
     }
 
+    if (!clinicId) {
+      setState({
+        error: "No clinic context",
+        isLoading: false,
+        leads: [],
+      });
+      return;
+    }
+
     const { data, error } = await supabase
       .from("leads")
-      .select("id, name, phone, source, condition, status, assigned_to, notes, created_at, updated_at")
+      .select("id, clinic_id, name, phone, source, condition, status, assigned_to, notes, created_at, updated_at")
+      .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -72,7 +91,7 @@ export function useLeads() {
       isLoading: false,
       leads: (data ?? []) as LeadRow[],
     });
-  }
+  }, [clinicId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -90,9 +109,22 @@ export function useLeads() {
         return;
       }
 
+      if (!clinicId) {
+        if (isMounted) {
+          setState({
+            error: "No clinic context",
+            isLoading: false,
+            leads: [],
+          });
+        }
+
+        return;
+      }
+
       const { data, error } = await supabase
         .from("leads")
-        .select("id, name, phone, source, condition, status, assigned_to, notes, created_at, updated_at")
+        .select("id, clinic_id, name, phone, source, condition, status, assigned_to, notes, created_at, updated_at")
+        .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
         .order("created_at", { ascending: false });
 
       if (!isMounted) {
@@ -120,14 +152,14 @@ export function useLeads() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [clinicId]);
 
   async function createLead(input: LeadMutationInput): Promise<LeadMutationResult> {
-    if (!supabase) {
-      return { error: supabaseConfigMessage };
-    }
+    if (!supabase) return { error: supabaseConfigMessage };
+    if (!clinicId) return { error: "No clinic context" };
 
     const payload: LeadInsert = {
+      clinic_id: clinicId, // SECURITY: Explicit clinic_id
       assigned_to: input.assigned_to ?? null,
       condition: normalizeOptionalText(input.condition),
       name: input.name.trim(),
@@ -139,9 +171,7 @@ export function useLeads() {
 
     const { error } = await supabase.from("leads").insert(payload as never);
 
-    if (error) {
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
 
     await loadLeads();
     return { error: null };
@@ -151,9 +181,8 @@ export function useLeads() {
     leadId: string,
     input: LeadMutationInput,
   ): Promise<LeadMutationResult> {
-    if (!supabase) {
-      return { error: supabaseConfigMessage };
-    }
+    if (!supabase) return { error: supabaseConfigMessage };
+    if (!clinicId) return { error: "No clinic context" };
 
     const payload: LeadUpdate = {
       assigned_to: input.assigned_to ?? null,
@@ -168,11 +197,10 @@ export function useLeads() {
     const { error } = await supabase
       .from("leads")
       .update(payload as never)
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
 
-    if (error) {
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
 
     await loadLeads();
     return { error: null };
@@ -182,34 +210,32 @@ export function useLeads() {
     leadId: string,
     status: LeadStatus,
   ): Promise<LeadMutationResult> {
-    if (!supabase) {
-      return { error: supabaseConfigMessage };
-    }
+    if (!supabase) return { error: supabaseConfigMessage };
+    if (!clinicId) return { error: "No clinic context" };
 
     const payload: LeadUpdate = { status };
 
     const { error } = await supabase
       .from("leads")
       .update(payload as never)
-      .eq("id", leadId);
+      .eq("id", leadId)
+      .eq("clinic_id", clinicId); // SECURITY: Double-check clinic context
 
-    if (error) {
-      return { error: error.message };
-    }
+    if (error) return { error: error.message };
 
     await loadLeads();
     return { error: null };
   }
 
   async function convertLeadToPatient(lead: LeadRow): Promise<LeadMutationResult> {
-    if (!supabase) {
-      return { error: supabaseConfigMessage };
-    }
+    if (!supabase) return { error: supabaseConfigMessage };
+    if (!clinicId) return { error: "No clinic context" };
 
     const existingPatientResponse = await supabase
       .from("patients")
       .select("id")
       .eq("lead_id", lead.id)
+      .eq("clinic_id", clinicId) // SECURITY: Filter by clinic
       .limit(1)
       .maybeSingle();
 
@@ -224,7 +250,8 @@ export function useLeads() {
       const updateResponse = await supabase
         .from("leads")
         .update(payload as never)
-        .eq("id", lead.id);
+        .eq("id", lead.id)
+        .eq("clinic_id", clinicId);
 
       if (updateResponse.error) {
         return { error: updateResponse.error.message };
@@ -238,6 +265,7 @@ export function useLeads() {
     }
 
     const patientPayload: PatientInsert = {
+      clinic_id: clinicId, // SECURITY: Explicit clinic_id
       age: null,
       assigned_therapist: lead.assigned_to,
       diagnosis: normalizeOptionalText(lead.condition),
@@ -262,7 +290,8 @@ export function useLeads() {
     const updateLeadResponse = await supabase
       .from("leads")
       .update(updatePayload as never)
-      .eq("id", lead.id);
+      .eq("id", lead.id)
+      .eq("clinic_id", clinicId);
 
     if (updateLeadResponse.error) {
       return { error: updateLeadResponse.error.message };

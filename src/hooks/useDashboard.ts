@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, supabaseConfigMessage } from "@/lib/supabase";
 import {
@@ -61,6 +61,7 @@ const fallbackDashboardData: DashboardData = {
   },
   appointments: [
     {
+      appointmentId: "demo-apt-1",
       patientId: "pat-farhana-rahman",
       patientName: "Farhana Rahman",
       therapist: "Dr. Tania Sultana",
@@ -68,6 +69,7 @@ const fallbackDashboardData: DashboardData = {
       status: "completed",
     },
     {
+      appointmentId: "demo-apt-2",
       patientId: "pat-mehedi-hasan",
       patientName: "Mehedi Hasan",
       therapist: "Dr. Fahim Ahmed",
@@ -75,6 +77,7 @@ const fallbackDashboardData: DashboardData = {
       status: "scheduled",
     },
     {
+      appointmentId: "demo-apt-3",
       patientId: "pat-nusrat-jahan",
       patientName: "Nusrat Jahan",
       therapist: "Dr. Tania Sultana",
@@ -82,6 +85,7 @@ const fallbackDashboardData: DashboardData = {
       status: "missed",
     },
     {
+      appointmentId: "demo-apt-4",
       patientId: "pat-kamrul-islam",
       patientName: "Kamrul Islam",
       therapist: "Dr. Fahim Ahmed",
@@ -89,6 +93,7 @@ const fallbackDashboardData: DashboardData = {
       status: "completed",
     },
     {
+      appointmentId: "demo-apt-5",
       patientId: "pat-sharmeen-akter",
       patientName: "Sharmeen Akter",
       therapist: "Dr. Nadia Karim",
@@ -96,6 +101,7 @@ const fallbackDashboardData: DashboardData = {
       status: "scheduled",
     },
     {
+      appointmentId: "demo-apt-6",
       patientId: "pat-rashidul-hoque",
       patientName: "Rashidul Hoque",
       therapist: "Dr. Nadia Karim",
@@ -103,6 +109,7 @@ const fallbackDashboardData: DashboardData = {
       status: "scheduled",
     },
     {
+      appointmentId: "demo-apt-7",
       patientId: "pat-sabina-yasmin",
       patientName: "Sabina Yasmin",
       therapist: "Dr. Tania Sultana",
@@ -110,6 +117,7 @@ const fallbackDashboardData: DashboardData = {
       status: "scheduled",
     },
     {
+      appointmentId: "demo-apt-8",
       patientId: "pat-sajjad-hossain",
       patientName: "Sajjad Hossain",
       therapist: "Dr. Fahim Ahmed",
@@ -331,6 +339,7 @@ function buildLiveDashboardData(
       missedSessions: toTrend(missedSessions, previousMissedSessions, true),
     },
     appointments: todaysAppointments.map((appointment) => ({
+      appointmentId: appointment.id,
       patientId: appointment.patient_id,
       patientName: appointment.patient?.name ?? "Unknown patient",
       therapist: appointment.therapist?.name ?? "Unassigned therapist",
@@ -370,12 +379,15 @@ function buildLiveDashboardData(
 
 export function useDashboard() {
   const { clinicId, linkedTherapistId, role } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
   const [state, setState] = useState<UseDashboardState>({
     data: fallbackDashboardData,
     error: null,
     isLoading: true,
     source: "fallback",
   });
+
+  const refreshDashboard = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     let isActive = true;
@@ -412,7 +424,7 @@ export function useDashboard() {
           supabase
             .from("appointments")
             .select(
-              "id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patient:patients(name), therapist:therapists(name)",
+              "id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patient:patients!appointments_patient_id_fkey(name), therapist:therapists!appointments_therapist_id_fkey(name)",
             )
             .eq("clinic_id", clinicId) // SECURITY: Filter by current clinic
             .order("scheduled_at", { ascending: true }),
@@ -453,9 +465,18 @@ export function useDashboard() {
         return;
       }
 
+      // SECURITY: Filter by role on client (therapist sees only own data)
+      let appointments = (appointmentsResponse.data ?? []) as AppointmentWithRelations[];
+      let patients = (patientsResponse.data ?? []) as PatientRow[];
+
+      if (role === "therapist" && linkedTherapistId) {
+        appointments = appointments.filter(a => a.therapist_id === linkedTherapistId);
+        patients = patients.filter(p => p.assigned_therapist === linkedTherapistId);
+      }
+
       const liveData = buildLiveDashboardData(
-        (appointmentsResponse.data ?? []) as AppointmentWithRelations[],
-        (patientsResponse.data ?? []) as PatientRow[],
+        appointments,
+        patients,
         (billingResponse.data ?? []) as BillingRow[],
         (treatmentPlansResponse.data ?? []) as TreatmentPlanRow[],
       );
@@ -473,7 +494,7 @@ export function useDashboard() {
     return () => {
       isActive = false;
     };
-  }, [clinicId, linkedTherapistId, role]);
+  }, [clinicId, linkedTherapistId, role, refreshKey]);
 
-  return state;
+  return { ...state, refreshDashboard };
 }

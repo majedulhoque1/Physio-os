@@ -4,18 +4,18 @@ import { cn } from "@/lib/utils";
 import type { StatusTone } from "@/types";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold capitalize",
+  "inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize tracking-wide",
   {
     variants: {
       tone: {
-        blue: "border-sky-100 bg-sky-50 text-sky-700",
-        green: "border-emerald-100 bg-emerald-50 text-emerald-700",
-        red: "border-rose-100 bg-rose-50 text-rose-700",
-        yellow: "border-amber-100 bg-amber-50 text-amber-700",
-        indigo: "border-indigo-100 bg-indigo-50 text-indigo-700",
-        purple: "border-violet-100 bg-violet-50 text-violet-700",
-        orange: "border-orange-100 bg-orange-50 text-orange-700",
-        gray: "border-slate-200 bg-slate-100 text-slate-700",
+        blue: "bg-sky-50 text-sky-700",
+        green: "bg-emerald-50 text-emerald-700",
+        red: "bg-rose-50 text-rose-700",
+        yellow: "bg-amber-50 text-amber-700",
+        indigo: "bg-indigo-50 text-indigo-700",
+        purple: "bg-violet-50 text-violet-700",
+        orange: "bg-orange-50 text-orange-700",
+        gray: "bg-stone-100 text-stone-600",
       },
     },
     defaultVariants: {

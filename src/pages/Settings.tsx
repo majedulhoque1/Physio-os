@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useToast } from "@/components/shared/useToast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useClinicSettings } from "@/hooks/useClinicSettings";
+
 import { supabase } from "@/lib/supabase";
 import type { ClinicMembershipRow, ClinicStaffRole, StatusTone, UserProfileRow } from "@/types";
 
@@ -40,7 +40,6 @@ export function Settings() {
   const { can, clinic, clinicId, signOut, user, userProfile } = useAuth();
   if (!user) return null;
   const { toast } = useToast();
-  const { settings: clinicSettings, updateSettings, isLoading: settingsLoading } = useClinicSettings();
 
   const [isSavingClinic, setIsSavingClinic] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -66,7 +65,7 @@ export function Settings() {
     if (!supabase || !clinicId) return;
     const { data } = await supabase
       .from("clinic_memberships")
-      .select("id, clinic_id, user_id, role, status, invited_by, created_at, updated_at, profile:user_profiles!clinic_memberships_user_id_fkey(full_name, phone)")
+      .select("id, clinic_id, user_id, role, status, invited_by, created_at, updated_at, profile:user_profiles!clinic_memberships_user_id_profile_fkey(full_name, phone)")
       .eq("clinic_id", clinicId)
       .eq("status", "active");
     setLiveMembers((data ?? []) as MemberWithProfile[]);
@@ -184,19 +183,44 @@ export function Settings() {
     }
 
     setIsAddingStaff(true);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).rpc("create_staff_member", {
-      p_email: staffEmail.trim(),
-      p_password: staffPassword,
-      p_full_name: staffName.trim(),
-      p_role: staffRole,
-      p_phone: staffPhone.trim() || null,
-      p_specialization: staffRole === "therapist" ? staffSpecialization.trim() || null : null,
-    });
-    setIsAddingStaff(false);
+    try {
+      const { data: { session: currentSession } } = await supabase!.auth.getSession();
+      if (!currentSession?.access_token) {
+        setIsAddingStaff(false);
+        toast({ title: "Failed to add staff", description: "Session expired — please log in again", variant: "error" });
+        return;
+      }
 
-    if (error) {
-      toast({ title: "Failed to add staff", description: error.message, variant: "error" });
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-staff-member`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${currentSession.access_token}`,
+            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email: staffEmail.trim(),
+            password: staffPassword,
+            full_name: staffName.trim(),
+            role: staffRole,
+            phone: staffPhone.trim() || null,
+            specialization: staffRole === "therapist" ? staffSpecialization.trim() || null : null,
+          }),
+        },
+      );
+
+      const result = await res.json();
+      setIsAddingStaff(false);
+
+      if (!res.ok || !result?.success) {
+        toast({ title: "Failed to add staff", description: result?.error || "Unknown error", variant: "error" });
+        return;
+      }
+    } catch (err: unknown) {
+      setIsAddingStaff(false);
+      toast({ title: "Failed to add staff", description: err instanceof Error ? err.message : "Unknown error", variant: "error" });
       return;
     }
 
@@ -301,25 +325,14 @@ export function Settings() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={isSavingProfile}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
-              >
-                <Save className="h-4 w-4" />
-                {isSavingProfile ? "Saving..." : "Save profile"}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-slate-50 hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                Sign out
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isSavingProfile}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Save className="h-4 w-4" />
+              {isSavingProfile ? "Saving..." : "Save profile"}
+            </button>
           </form>
         </section>
       </div>
@@ -381,161 +394,19 @@ export function Settings() {
             <h2 className="text-sm font-semibold text-foreground">Automation</h2>
           </div>
 
-          {settingsLoading ? (
-            <div className="space-y-3">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-8 animate-pulse rounded-lg bg-slate-100" />
-              ))}
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Bell className="h-6 w-6 text-primary" />
             </div>
-          ) : clinicSettings ? (
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Message Toggles
-                </p>
-                {([
-                  { key: "auto_thank_you_enabled" as const, label: "Thank-you after payment" },
-                  { key: "auto_reminder_enabled" as const, label: "Session reminder (day before)" },
-                  { key: "auto_missed_alert_enabled" as const, label: "Missed session alert" },
-                  { key: "auto_followup_enabled" as const, label: "Post-treatment follow-up" },
-                ]).map(({ key, label }) => (
-                  <label key={key} className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-foreground">{label}</span>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const result = await updateSettings({ [key]: !clinicSettings[key] });
-                        if (result.error) {
-                          toast({ title: "Could not update", description: result.error, variant: "error" });
-                        }
-                      }}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                        clinicSettings[key] ? "bg-primary" : "bg-slate-200"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                          clinicSettings[key] ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                  </label>
-                ))}
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Timing
-                </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Thank-you delay (minutes)
-                    <input
-                      type="number"
-                      min={0}
-                      defaultValue={clinicSettings.thank_you_delay_minutes}
-                      onBlur={async (e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val !== clinicSettings.thank_you_delay_minutes) {
-                          const result = await updateSettings({ thank_you_delay_minutes: val });
-                          if (result.error) toast({ title: "Error", description: result.error, variant: "error" });
-                        }
-                      }}
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-foreground">
-                    Reminder (hours before)
-                    <input
-                      type="number"
-                      min={1}
-                      defaultValue={clinicSettings.reminder_hours_before}
-                      onBlur={async (e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val !== clinicSettings.reminder_hours_before) {
-                          const result = await updateSettings({ reminder_hours_before: val });
-                          if (result.error) toast({ title: "Error", description: result.error, variant: "error" });
-                        }
-                      }}
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-foreground">
-                    Follow-up delay (days)
-                    <input
-                      type="number"
-                      min={1}
-                      defaultValue={clinicSettings.followup_delay_days}
-                      onBlur={async (e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val !== clinicSettings.followup_delay_days) {
-                          const result = await updateSettings({ followup_delay_days: val });
-                          if (result.error) toast({ title: "Error", description: result.error, variant: "error" });
-                        }
-                      }}
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-foreground">
-                    Abandoned threshold (days)
-                    <input
-                      type="number"
-                      min={1}
-                      defaultValue={clinicSettings.abandoned_threshold_days}
-                      onBlur={async (e) => {
-                        const val = parseInt(e.target.value, 10);
-                        if (!isNaN(val) && val !== clinicSettings.abandoned_threshold_days) {
-                          const result = await updateSettings({ abandoned_threshold_days: val });
-                          if (result.error) toast({ title: "Error", description: result.error, variant: "error" });
-                        }
-                      }}
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Message Templates
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Placeholders: {"{{patient_name}}, {{therapist_name}}, {{clinic_name}}, {{session_number}}, {{total_sessions}}, {{appointment_date}}, {{appointment_time}}"}
-                </p>
-                {([
-                  { key: "thank_you_template" as const, label: "Thank You" },
-                  { key: "reminder_template" as const, label: "Reminder" },
-                  { key: "missed_template" as const, label: "Missed Session" },
-                  { key: "followup_template" as const, label: "Follow-up" },
-                ]).map(({ key, label }) => (
-                  <label key={key} className="text-sm font-medium text-foreground">
-                    {label}
-                    <textarea
-                      defaultValue={clinicSettings[key] ?? ""}
-                      rows={2}
-                      onBlur={async (e) => {
-                        const val = e.target.value.trim();
-                        if (val !== (clinicSettings[key] ?? "")) {
-                          const result = await updateSettings({ [key]: val || null });
-                          if (result.error) toast({ title: "Error", description: result.error, variant: "error" });
-                          else toast({ title: `${label} template updated`, variant: "success" });
-                        }
-                      }}
-                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Automation settings not available yet.
+            <p className="text-sm font-medium text-foreground">Coming soon</p>
+            <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+              Automated WhatsApp reminders, thank-you messages, missed session alerts, and follow-ups — all configurable per clinic.
             </p>
-          )}
+          </div>
         </section>
       ) : null}
 
-      {/* Team Members */}
+      {/* Team Members — admin-only section comes before sign-out */}
       <section className="rounded-lg border border-border bg-surface p-5 shadow-card">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-foreground">Team members</h2>
@@ -671,6 +542,25 @@ export function Settings() {
             ))}
           </div>
         )}
+      </section>
+      {/* Sign out */}
+      <section className="rounded-lg border border-border bg-surface p-5 shadow-card">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">Sign out</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              You'll be redirected to the login page.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </div>
       </section>
     </div>
   );

@@ -8,13 +8,13 @@ interface EmptyStateProps {
 
 export function EmptyState({ description, icon: Icon, title }: EmptyStateProps) {
   return (
-    <section className="flex min-h-[calc(100vh-12rem)] items-center justify-center">
-      <div className="w-full rounded-lg border border-dashed border-border bg-surface p-8 text-center shadow-card sm:p-12">
-        <span className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Icon className="h-6 w-6" />
+    <section className="flex min-h-[calc(100vh-16rem)] items-center justify-center">
+      <div className="w-full max-w-md rounded-xl border border-dashed border-border bg-white p-10 text-center shadow-card">
+        <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/8 text-primary">
+          <Icon className="h-5 w-5" />
         </span>
-        <h2 className="mt-5 text-xl font-semibold text-foreground">{title}</h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+        <h2 className="mt-4 text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
       </div>

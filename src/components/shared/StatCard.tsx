@@ -14,37 +14,13 @@ interface StatCardProps {
   className?: string;
 }
 
-const accentStyles: Record<AccentColor, { border: string; iconBg: string; iconText: string }> = {
-  indigo: {
-    border: "border-t-indigo-500",
-    iconBg: "bg-indigo-50",
-    iconText: "text-indigo-500",
-  },
-  emerald: {
-    border: "border-t-emerald-500",
-    iconBg: "bg-emerald-50",
-    iconText: "text-emerald-500",
-  },
-  blue: {
-    border: "border-t-blue-500",
-    iconBg: "bg-blue-50",
-    iconText: "text-blue-500",
-  },
-  red: {
-    border: "border-t-red-500",
-    iconBg: "bg-red-50",
-    iconText: "text-red-500",
-  },
-  green: {
-    border: "border-t-green-500",
-    iconBg: "bg-green-50",
-    iconText: "text-green-500",
-  },
-  orange: {
-    border: "border-t-orange-500",
-    iconBg: "bg-orange-50",
-    iconText: "text-orange-500",
-  },
+const accentStyles: Record<AccentColor, { bg: string; text: string }> = {
+  indigo: { bg: "bg-indigo-50", text: "text-indigo-600" },
+  emerald: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  blue: { bg: "bg-sky-50", text: "text-sky-600" },
+  red: { bg: "bg-rose-50", text: "text-rose-600" },
+  green: { bg: "bg-emerald-50", text: "text-emerald-600" },
+  orange: { bg: "bg-amber-50", text: "text-amber-600" },
 };
 
 export function StatCard({
@@ -63,50 +39,45 @@ export function StatCard({
   return (
     <article
       className={cn(
-        "rounded-lg border border-border bg-surface p-4 sm:p-5 shadow-card border-t-[3px]",
-        accent ? accent.border : "border-t-border",
+        "rounded-xl border border-border bg-white p-4 sm:p-5 shadow-card transition-shadow hover:shadow-elevated",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          {Icon && accent ? (
-            <span
-              className={cn(
-                "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                accent.iconBg,
-                accent.iconText,
-              )}
-            >
-              <Icon className="h-5 w-5" />
-            </span>
-          ) : null}
-
-          <div>
-            <p
-              className={cn(
-                "text-2xl sm:text-[28px] font-semibold leading-none tracking-tight",
-                valueTone === "danger" ? "text-danger" : "text-foreground",
-              )}
-            >
-              {value}
-            </p>
-            <p className="mt-3 text-[13px] font-medium text-muted-foreground">{label}</p>
-          </div>
-        </div>
+      <div className="flex items-start justify-between gap-3">
+        {Icon && accent ? (
+          <span
+            className={cn(
+              "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+              accent.bg,
+              accent.text,
+            )}
+          >
+            <Icon className="h-[18px] w-[18px]" />
+          </span>
+        ) : null}
 
         <span
           className={cn(
-            "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
+            "ml-auto inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
             trendDirection === "up"
-              ? "bg-success/10 text-success"
-              : "bg-danger/10 text-danger",
+              ? "bg-emerald-50 text-emerald-600"
+              : "bg-rose-50 text-rose-600",
           )}
         >
-          <TrendIcon className="h-3.5 w-3.5" />
+          <TrendIcon className="h-3 w-3" />
           {trend}
         </span>
       </div>
+
+      <p
+        className={cn(
+          "mt-3 text-2xl sm:text-[28px] font-semibold leading-none tracking-tight",
+          valueTone === "danger" ? "text-danger" : "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+      <p className="mt-1.5 text-[13px] font-medium text-muted-foreground">{label}</p>
     </article>
   );
 }

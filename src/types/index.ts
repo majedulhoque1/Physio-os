@@ -500,6 +500,7 @@ export interface DashboardTrend {
 }
 
 export interface DashboardAppointmentItem {
+  appointmentId: string;
   patientId: string;
   patientName: string;
   status: AppointmentStatus;

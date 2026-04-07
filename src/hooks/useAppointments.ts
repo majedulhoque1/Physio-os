@@ -32,7 +32,7 @@ type AppointmentInsert = Database["public"]["Tables"]["appointments"]["Insert"];
 type AppointmentUpdate = Database["public"]["Tables"]["appointments"]["Update"];
 
 const SELECT_FIELDS =
-  "id, clinic_id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patients(name, phone), therapists(name)";
+  "id, clinic_id, patient_id, therapist_id, scheduled_at, duration_mins, status, session_number, notes, treatment_plan_id, created_at, patients!appointments_patient_id_fkey(name, phone), therapists!appointments_therapist_id_fkey(name)";
 
 /**
  * SECURITY PATTERN: Multi-Tenant Appointment Hook
