@@ -5,7 +5,6 @@ import {
   ChevronRight,
   CreditCard,
   DatabaseZap,
-  TrendingUp,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -107,8 +106,8 @@ export function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
             <div key={i} className="h-28 animate-pulse rounded-xl bg-white border border-border" />
           ))}
         </div>
@@ -129,29 +128,9 @@ export function AdminDashboard() {
         </section>
       ) : null}
 
-      {/* ── KPI STRIP ─────────────────────────────────────────
-          Revenue is first — it's the first thing the admin checks.
-          Each card has a comparison trend to give context, not just raw numbers. */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {/* Revenue — most prominent */}
-        <article className="col-span-2 flex items-center justify-between rounded-xl border border-border bg-white p-5 shadow-card lg:col-span-1">
-          <div>
-            <p className="text-[13px] font-medium text-muted-foreground">Week Revenue</p>
-            <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
-              ৳{data.kpis.weekRevenue.toLocaleString()}
-            </p>
-            <TrendBadge
-              value={data.trends.weekRevenue.value}
-              direction={data.trends.weekRevenue.direction}
-              suffix="vs last week"
-            />
-          </div>
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-            <TrendingUp className="h-5 w-5" />
-          </span>
-        </article>
-
-        {/* Sessions progress */}
+      {/* ── KPI STRIP ──────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {/* Sessions progress — spans full row on mobile, first col on sm+ */}
         <article className="rounded-xl border border-border bg-white p-5 shadow-card">
           <p className="text-[13px] font-medium text-muted-foreground">Sessions Today</p>
           <p className="mt-1 text-3xl font-semibold tracking-tight text-foreground">

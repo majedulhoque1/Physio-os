@@ -236,19 +236,29 @@ export interface BillingRow {
 }
 
 export interface TreatmentPlanRow {
-  id: string;
-  clinic_id: string;
-  patient_id: string;
-  therapist_id: string;
-  diagnosis: string | null;
-  total_sessions: number;
-  completed_sessions: number;
-  status: TreatmentPlanStatus;
-  started_at: string | null;
-  completed_at: string | null;
   abandoned_at: string | null;
-  notes: string | null;
+  clinic_id: string;
+  completed_at: string | null;
+  completed_sessions: number;
   created_at: string | null;
+  diagnosis: string | null;
+  fee_per_session: number | null;
+  frequency_per_week: number | null;
+  id: string;
+  interventions: string[] | null;
+  long_term_goals: string | null;
+  notes: string | null;
+  package_name: string | null;
+  patient_id: string;
+  patient_instructions: string | null;
+  precautions: string | null;
+  reassessment_date: string | null;
+  short_term_goals: string | null;
+  started_at: string | null;
+  status: TreatmentPlanStatus;
+  therapist_id: string;
+  total_fee: number | null;
+  total_sessions: number;
   updated_at: string | null;
 }
 

@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLinkedTherapistId(null);
   }
 
-  async function loadUserData(userId: string) {
+  async function loadUserData(userId: string, jwtClinicId?: string) {
     if (!supabase) return;
 
     const { data: profile } = await supabase
@@ -84,7 +84,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMembership(preferredMembership);
 
     const resolvedClinicId =
-      resolvedProfile?.default_clinic_id ?? preferredMembership?.clinic_id ?? null;
+      resolvedProfile?.default_clinic_id ??
+      preferredMembership?.clinic_id ??
+      jwtClinicId ??
+      null;
 
     if (resolvedClinicId) {
       const { data: clinicData } = await supabase
@@ -118,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        loadUserData(session.user.id).finally(() => setIsLoading(false));
+        loadUserData(session.user.id, session.user.app_metadata?.clinic_id as string | undefined).finally(() => setIsLoading(false));
       } else {
         setIsLoading(false);
       }
@@ -131,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        loadUserData(session.user.id).finally(() => setIsLoading(false));
+        loadUserData(session.user.id, session.user.app_metadata?.clinic_id as string | undefined).finally(() => setIsLoading(false));
         return;
       }
 
