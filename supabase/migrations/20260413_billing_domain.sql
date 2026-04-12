@@ -34,6 +34,20 @@ create table if not exists clinic_settings (
   updated_at timestamptz default now()
 );
 
+alter table clinic_settings enable row level security;
+
+create policy if not exists "clinic_settings_select_member"
+  on clinic_settings for select
+  using (is_active_clinic_member(clinic_id));
+
+create policy if not exists "clinic_settings_insert_admin"
+  on clinic_settings for insert
+  with check (has_clinic_role(clinic_id, array['clinic_admin']));
+
+create policy if not exists "clinic_settings_update_admin"
+  on clinic_settings for update
+  using (has_clinic_role(clinic_id, array['clinic_admin']));
+
 -- ---------------------------------------------------------------------------
 -- 3. Replace provision_clinic_for_current_user (clean, 7-day trial)
 -- ---------------------------------------------------------------------------
@@ -138,6 +152,10 @@ begin
     updated_at = now()
   where clinic_id = p_clinic_id;
 
+  if not found then
+    raise exception 'Clinic subscription not found for clinic_id: %', p_clinic_id;
+  end if;
+
   insert into subscription_invoices (clinic_id, status, amount_due_cents, currency, due_at)
   select p_clinic_id, 'open', sp.monthly_price_cents, 'bdt', now() + interval '7 days'
   from subscription_plans sp
@@ -203,7 +221,11 @@ $$;
 -- ---------------------------------------------------------------------------
 -- 8. Create sa_list_invoices RPC
 -- ---------------------------------------------------------------------------
-create or replace function sa_list_invoices(p_clinic_id uuid default null)
+create or replace function sa_list_invoices(
+  p_clinic_id uuid default null,
+  p_limit int default 50,
+  p_offset int default 0
+)
 returns table(
   id uuid,
   clinic_id uuid,
@@ -237,7 +259,8 @@ begin
     join clinics c on c.id = si.clinic_id
     where (p_clinic_id is null or si.clinic_id = p_clinic_id)
     order by si.created_at desc
-    limit 100;
+    limit p_limit
+    offset p_offset;
 end;
 $$;
 
@@ -269,6 +292,11 @@ declare
 begin
   v_clinic_id := current_clinic_id();
   if v_clinic_id is null then return null; end if;
+
+  -- Verify caller is actually a member of this clinic
+  if not is_active_clinic_member(v_clinic_id) then
+    return null;
+  end if;
 
   select json_build_object(
     'plan_key', cs.plan_key,
