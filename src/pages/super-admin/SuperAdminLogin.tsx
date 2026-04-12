@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import "@/styles/super-admin.css";
 
 const SA_EMAIL = "majedulhoqueofficials@gmail.com";
 
@@ -13,69 +14,62 @@ export function SuperAdminLogin() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Already authenticated as super admin — redirect
   useEffect(() => {
     if (isAuthenticated && isSuperAdmin) {
       navigate("/super-admin", { replace: true });
     }
   }, [isAuthenticated, isSuperAdmin, navigate]);
 
-  if (isAuthenticated && isSuperAdmin) {
-    return null;
-  }
+  if (isAuthenticated && isSuperAdmin) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-
     const result = await signIn(SA_EMAIL, password);
     setIsLoading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    // signIn triggers auth state change — isSuperAdmin will update.
-    // Navigate after a tick to let AuthContext settle.
+    if (result.error) { setError(result.error); return; }
     setTimeout(() => navigate("/super-admin", { replace: true }), 100);
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div
+      className="nb-bg flex min-h-screen items-center justify-center px-4"
+    >
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <span className="mx-auto inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gray-900">
-            <Shield className="h-5 w-5 text-white" />
+          <span
+            className="mx-auto inline-flex h-12 w-12 items-center justify-center"
+            style={{ background: "#4ADE80", border: "3px solid #000", borderRadius: "2px" }}
+          >
+            <Shield className="h-6 w-6 text-black" />
           </span>
-          <h1 className="mt-4 text-xl font-bold tracking-tight text-gray-900">
+          <h1 className="nb-heading mt-4 text-4xl text-black">
             System Admin
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm font-bold text-gray-600 uppercase tracking-wider">
             Physio OS Platform Control
           </p>
         </div>
 
         {/* Login card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="nb-modal p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email — locked */}
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-bold text-black uppercase tracking-wide">
                 Email
               </label>
               <input
                 type="email"
                 value={SA_EMAIL}
                 disabled
-                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-400 cursor-not-allowed"
+                className="nb-input w-full px-3.5 py-2.5 text-sm text-gray-500"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-bold text-black uppercase tracking-wide">
                 Password
               </label>
               <input
@@ -85,12 +79,15 @@ export function SuperAdminLogin() {
                 placeholder="Enter admin password"
                 required
                 autoFocus
-                className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 transition-colors focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                className="nb-input w-full px-3.5 py-2.5 text-sm text-black placeholder:text-gray-400"
               />
             </div>
 
             {error && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+              <p
+                className="px-3.5 py-2.5 text-sm font-bold text-black"
+                style={{ border: "2px solid #000", background: "#FF79C6", borderRadius: "2px" }}
+              >
                 {error}
               </p>
             )}
@@ -98,7 +95,7 @@ export function SuperAdminLogin() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-700 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
+              className="nb-btn w-full bg-black px-4 py-2.5 text-sm text-white"
             >
               {isLoading ? "Authenticating..." : "Access Panel"}
             </button>
@@ -107,7 +104,7 @@ export function SuperAdminLogin() {
 
         <button
           onClick={() => navigate("/login")}
-          className="mt-5 block w-full text-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          className="mt-5 block w-full text-center text-xs font-bold text-gray-500 hover:text-black transition-colors uppercase tracking-wider"
         >
           Back to clinic login
         </button>
