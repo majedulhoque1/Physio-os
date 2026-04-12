@@ -551,3 +551,52 @@ export interface DashboardData {
     weekRevenue: DashboardTrend;
   };
 }
+
+export interface SAPatientRow {
+  id: string;
+  name: string;
+  phone: string;
+  age: number | null;
+  gender: string | null;
+  diagnosis: string | null;
+  status: string;
+  total_sessions: number;
+  completed_sessions: number;
+  assigned_therapist_name: string | null;
+  created_at: string;
+}
+
+export interface SATherapistRow {
+  id: string;
+  name: string;
+  phone: string | null;
+  specialization: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface SAAppointmentRow {
+  id: string;
+  patient_name: string;
+  therapist_name: string;
+  scheduled_at: string;
+  status: string;
+  duration_mins: number;
+  session_number: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface SATreatmentPlanRow {
+  id: string;
+  patient_name: string;
+  therapist_name: string;
+  diagnosis: string | null;
+  status: string;
+  total_sessions: number | null;
+  completed_sessions: number;
+  fee_per_session: number | null;
+  total_fee: number | null;
+  started_at: string | null;
+  created_at: string;
+}
