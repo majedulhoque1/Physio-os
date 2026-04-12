@@ -3,6 +3,27 @@ import { CheckCircle, CreditCard, Zap } from "lucide-react";
 import { useUpgradePendingList, useSAInvoiceList } from "@/hooks/useSubscription";
 import { approveTenant } from "@/hooks/useSuperAdmin";
 
+const STATUS_COLORS: Record<string, string> = {
+  active: "#4ADE80",
+  trialing: "#FEF08A",
+  past_due: "#FF79C6",
+  cancelled: "#e5e7eb",
+  incomplete: "#FF79C6",
+  paid: "#4ADE80",
+  open: "#FEF08A",
+};
+
+function InvoiceStatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className="nb-badge"
+      style={{ background: STATUS_COLORS[status] ?? "#e5e7eb" }}
+    >
+      {status}
+    </span>
+  );
+}
+
 export function SuperAdminBilling() {
   const { requests, isLoading: reqLoading, error: reqError, refetch: refetchRequests } =
     useUpgradePendingList();
@@ -22,10 +43,7 @@ export function SuperAdminBilling() {
     setApproveError(null);
     const result = await approveTenant({ clinic_id: clinicId, plan_key: "starter" });
     setApprovingId(null);
-    if (result.error) {
-      setApproveError(result.error);
-      return;
-    }
+    if (result.error) { setApproveError(result.error); return; }
     refetchRequests();
     refetchInvoices();
   }
@@ -33,91 +51,104 @@ export function SuperAdminBilling() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Plan &amp; Billing</h1>
-        <p className="mt-1 text-sm text-gray-500">Manage plans, approve upgrades, and view invoice history</p>
+        <h1 className="nb-heading text-4xl text-black">Plan &amp; Billing</h1>
+        <p className="mt-1 text-sm font-bold text-gray-600 uppercase tracking-wide">
+          Manage plans, approve upgrades, and view invoice history
+        </p>
       </div>
 
       {/* Plan Catalog */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-gray-900">Plan Catalog</h2>
-        <div className="max-w-xs rounded-xl border border-gray-200 bg-white p-5">
+        <h2 className="nb-heading text-xl text-black mb-4">Plan Catalog</h2>
+        <div className="nb-card max-w-xs p-5">
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-900">
-              <Zap className="h-4 w-4 text-white" />
+            <div
+              className="flex h-9 w-9 items-center justify-center"
+              style={{ background: "#4ADE80", border: "2px solid #000", borderRadius: "2px" }}
+            >
+              <Zap className="h-4 w-4 text-black" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Basic</p>
-              <p className="text-sm text-gray-500">৳5,000 / month</p>
+              <p className="nb-heading text-lg text-black">Basic</p>
+              <p className="text-sm font-bold text-gray-600">৳5,000 / month</p>
             </div>
           </div>
-          <ul className="space-y-2 text-sm text-gray-600">
+          <ul className="space-y-2 text-sm font-medium text-gray-700">
             <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+              <CheckCircle className="h-4 w-4 text-black shrink-0" />
               Session reminder automation
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+              <CheckCircle className="h-4 w-4 text-black shrink-0" />
               Missed session follow-up
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+              <CheckCircle className="h-4 w-4 text-black shrink-0" />
               Unlimited patients &amp; therapists
             </li>
             <li className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
+              <CheckCircle className="h-4 w-4 text-black shrink-0" />
               7-day free trial
             </li>
           </ul>
-          <p className="mt-3 text-xs text-gray-400">plan_key: starter · Manual approval · BDT only</p>
+          <p className="mt-3 text-xs font-bold text-gray-500 uppercase tracking-wide">
+            plan_key: starter · Manual approval · BDT only
+          </p>
         </div>
       </section>
 
       {/* Pending Upgrade Requests */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-gray-900 flex items-center gap-2">
+        <h2 className="nb-heading text-xl text-black mb-4 flex items-center gap-2">
           Pending Upgrade Requests
           {requests.length > 0 && (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+            <span
+              className="nb-badge"
+              style={{ background: "#FF79C6" }}
+            >
               {requests.length}
             </span>
           )}
         </h2>
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="nb-table-wrap">
+          <table className="nb-table">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clinic</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Owner</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Requested</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+              <tr>
+                <th>Clinic</th>
+                <th>Owner</th>
+                <th>Status</th>
+                <th>Requested</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {reqLoading ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-gray-500">Loading...</td></tr>
               ) : reqError ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-red-500">{reqError}</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-black">{reqError}</td></tr>
               ) : requests.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">No pending requests</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-gray-500">No pending requests</td></tr>
               ) : (
                 requests.map((r) => (
-                  <tr key={r.clinic_id} className="border-b border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-900">{r.clinic_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{r.owner_email ?? "—"}</td>
-                    <td className="px-4 py-3">
-                      <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+                  <tr key={r.clinic_id}>
+                    <td className="font-bold text-black">{r.clinic_name}</td>
+                    <td className="font-medium text-gray-700">{r.owner_email ?? "—"}</td>
+                    <td>
+                      <span
+                        className="nb-badge"
+                        style={{ background: "#FEF08A" }}
+                      >
                         {r.subscription_status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="text-gray-600 text-xs font-medium">
                       {new Date(r.upgrade_requested_at).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <button
                         onClick={() => handleApprove(r.clinic_id)}
                         disabled={approvingId === r.clinic_id}
-                        className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-60 transition-colors"
+                        className="nb-btn bg-black px-3 py-1.5 text-xs text-white"
                       >
                         {approvingId === r.clinic_id ? "..." : "Approve"}
                       </button>
@@ -129,56 +160,49 @@ export function SuperAdminBilling() {
           </table>
         </div>
         {approveError && (
-          <p className="mt-2 text-sm text-red-600">{approveError}</p>
+          <p
+            className="mt-2 px-3 py-2 text-sm font-bold text-black"
+            style={{ border: "2px solid #000", background: "#FF79C6", borderRadius: "2px" }}
+          >
+            {approveError}
+          </p>
         )}
       </section>
 
       {/* Invoice History */}
       <section>
-        <h2 className="mb-4 text-base font-semibold text-gray-900 flex items-center gap-2">
-          <CreditCard className="h-4 w-4 text-gray-500" />
+        <h2 className="nb-heading text-xl text-black mb-4 flex items-center gap-2">
+          <CreditCard className="h-5 w-5 text-black" />
           Invoice History
         </h2>
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white">
-          <table className="w-full text-sm">
+        <div className="nb-table-wrap">
+          <table className="nb-table">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Clinic</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Due</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paid</th>
+              <tr>
+                <th>Clinic</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Due</th>
+                <th>Paid</th>
               </tr>
             </thead>
             <tbody>
               {invLoading ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-gray-500">Loading...</td></tr>
               ) : invError ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-red-500">{invError}</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-black">{invError}</td></tr>
               ) : invoices.length === 0 ? (
-                <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">No invoices yet</td></tr>
+                <tr><td colSpan={5} className="py-10 text-center font-bold text-gray-500">No invoices yet</td></tr>
               ) : (
                 invoices.map((inv) => (
-                  <tr key={inv.id} className="border-b border-gray-100">
-                    <td className="px-4 py-3 font-medium text-gray-900">{inv.clinic_name}</td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">
-                      ৳{(inv.amount_due_cents / 100).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-                        inv.status === "paid"
-                          ? "border-green-200 bg-green-50 text-green-700"
-                          : inv.status === "open"
-                          ? "border-amber-200 bg-amber-50 text-amber-700"
-                          : "border-gray-200 bg-gray-100 text-gray-600"
-                      }`}>
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                  <tr key={inv.id}>
+                    <td className="font-bold text-black">{inv.clinic_name}</td>
+                    <td className="font-bold text-black">৳{(inv.amount_due_cents / 100).toLocaleString()}</td>
+                    <td><InvoiceStatusBadge status={inv.status} /></td>
+                    <td className="text-gray-600 text-xs font-medium">
                       {inv.due_at ? new Date(inv.due_at).toLocaleDateString() : "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="text-gray-600 text-xs font-medium">
                       {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}
                     </td>
                   </tr>
