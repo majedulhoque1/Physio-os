@@ -166,6 +166,21 @@ export async function updateSubscription(params: {
   return { error: null };
 }
 
+export async function approveTenant(params: {
+  clinic_id: string;
+  plan_key?: string;
+}): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Supabase not configured" };
+
+  const { error } = await supabase.rpc("sa_approve_subscription", {
+    p_clinic_id: params.clinic_id,
+    p_plan_key: params.plan_key ?? "starter",
+  });
+
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export function useTenantPatients(clinicId: string | undefined) {
   const [data, setData] = useState<SAPatientRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
