@@ -3,6 +3,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import { getRouteMeta } from "@/lib/navigation";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+import { TrialBanner } from "@/components/shared/TrialBanner";
+import { SubscriptionGate } from "@/components/shared/SubscriptionGate";
 
 export function AppShell() {
   const location = useLocation();
@@ -26,6 +28,8 @@ export function AppShell() {
           </div>
         </main>
       </div>
+      <TrialBanner />
+      <SubscriptionGate />
     </div>
   );
 }
