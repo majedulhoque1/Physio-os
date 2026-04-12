@@ -128,6 +128,38 @@ export interface ClinicSubscriptionRow {
   stripe_subscription_id: string | null;
   trial_ends_at: string | null;
   updated_at: string | null;
+  upgrade_requested_at: string | null;
+}
+
+export interface ClinicSubscriptionExtRow {
+  plan_key: string;
+  status: SubscriptionStatus;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  upgrade_requested_at: string | null;
+  is_locked: boolean;
+  allowed_message_types: string[];
+}
+
+export interface UpgradeRequestItem {
+  clinic_id: string;
+  clinic_name: string;
+  owner_email: string | null;
+  plan_key: string;
+  subscription_status: string;
+  upgrade_requested_at: string;
+}
+
+export interface SAInvoiceRow {
+  id: string;
+  clinic_id: string;
+  clinic_name: string;
+  status: string;
+  amount_due_cents: number;
+  currency: string;
+  due_at: string | null;
+  paid_at: string | null;
+  created_at: string;
 }
 
 export interface SubscriptionInvoiceRow {
