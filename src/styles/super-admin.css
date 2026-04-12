@@ -1,0 +1,115 @@
+/* ─── Neobrutalism primitives for Super Admin only ─── */
+/* Imported once in SuperAdminShell.tsx — never affects clinic dashboard */
+
+/* Polka-dot page background — apply to <main> */
+.nb-bg {
+  background-image: radial-gradient(#000 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  background-color: #ffffff;
+}
+
+/* Cards */
+.nb-card {
+  border: 3px solid #000;
+  border-radius: 2px;
+  box-shadow: 6px 6px 0 0 #000;
+  background: #fff;
+}
+
+/* Modals (heavier shadow) */
+.nb-modal {
+  border: 3px solid #000;
+  border-radius: 2px;
+  box-shadow: 10px 10px 0 0 #000;
+  background: #fff;
+}
+
+/* Buttons */
+.nb-btn {
+  border: 3px solid #000;
+  border-radius: 2px;
+  box-shadow: 4px 4px 0 0 #000;
+  font-weight: 700;
+  cursor: pointer;
+  transition: box-shadow 0.08s ease, transform 0.08s ease;
+}
+.nb-btn:hover:not(:disabled) {
+  box-shadow: 2px 2px 0 0 #000;
+  transform: translate(2px, 2px);
+}
+.nb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inputs & selects */
+.nb-input {
+  border: 2px solid #000;
+  border-radius: 2px;
+  background: #fff;
+  outline: none;
+  transition: box-shadow 0.08s ease;
+}
+.nb-input:focus {
+  border-width: 3px;
+  box-shadow: 3px 3px 0 0 #000;
+}
+.nb-input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+/* Status / plan badges */
+.nb-badge {
+  border: 2px solid #000;
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Tables */
+.nb-table-wrap {
+  border: 3px solid #000;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.nb-table {
+  width: 100%;
+}
+.nb-table thead tr {
+  background: #000;
+  color: #fff;
+}
+.nb-table thead th {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  padding: 10px 16px;
+  text-align: left;
+}
+.nb-table tbody tr {
+  border-bottom: 2px solid #000;
+}
+.nb-table tbody tr:last-child {
+  border-bottom: none;
+}
+.nb-table tbody tr:hover {
+  background: #fef08a;
+}
+.nb-table tbody td {
+  padding: 10px 16px;
+}
+
+/* Anton headings */
+.nb-heading {
+  font-family: 'Anton', Impact, 'Arial Black', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
