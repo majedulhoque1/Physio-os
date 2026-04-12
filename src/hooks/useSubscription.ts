@@ -17,7 +17,7 @@ export function useUpgradePendingList() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = useCallback(() => {
+  const refetch = useCallback(() => {
     if (!supabase) return;
     setIsLoading(true);
     setError(null);
@@ -27,10 +27,14 @@ export function useUpgradePendingList() {
         if (err) setError(err.message);
         else setRequests(data ?? []);
         setIsLoading(false);
+      })
+      .catch((e: Error) => {
+        setError(e.message);
+        setIsLoading(false);
       });
   }, []);
 
-  return { requests, isLoading, error, fetch };
+  return { requests, isLoading, error, refetch };
 }
 
 export function useSAInvoiceList(clinicId?: string) {
@@ -38,7 +42,7 @@ export function useSAInvoiceList(clinicId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetch = useCallback(() => {
+  const refetch = useCallback(() => {
     if (!supabase) return;
     setIsLoading(true);
     setError(null);
@@ -48,8 +52,12 @@ export function useSAInvoiceList(clinicId?: string) {
         if (err) setError(err.message);
         else setInvoices(data ?? []);
         setIsLoading(false);
+      })
+      .catch((e: Error) => {
+        setError(e.message);
+        setIsLoading(false);
       });
   }, [clinicId]);
 
-  return { invoices, isLoading, error, fetch };
+  return { invoices, isLoading, error, refetch };
 }
