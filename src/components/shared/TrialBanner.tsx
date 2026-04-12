@@ -12,7 +12,7 @@ function getDaysLeft(trialEndsAt: string | null): number {
 }
 
 export function TrialBanner() {
-  const { role, clinicId, subscriptionStatus, trialEndsAt, upgradeRequested } = useAuth();
+  const { role, clinicId, subscriptionStatus, trialEndsAt, upgradeRequested, isSuperAdmin } = useAuth();
   const [phase, setPhase] = useState<"countdown" | "plan">("countdown");
   const [dismissed, setDismissed] = useState(false);
   const [requesting, setRequesting] = useState(false);
@@ -27,6 +27,7 @@ export function TrialBanner() {
     return () => clearTimeout(t);
   }, []);
 
+  if (isSuperAdmin) return null;
   if (role !== "clinic_admin") return null;
   if (subscriptionStatus !== "trialing") return null;
   if (dismissed) return null;
