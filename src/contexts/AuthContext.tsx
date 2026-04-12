@@ -7,6 +7,8 @@ import type {
   ClinicMembershipRow,
   ClinicRow,
   ClinicStaffRole,
+  ClinicSubscriptionExtRow,
+  SubscriptionStatus,
   UserProfileRow,
 } from "@/types";
 
@@ -17,6 +19,8 @@ export interface SignUpParams {
   password: string;
 }
 
+const SUPER_ADMIN_EMAIL = "majedulhoqueofficials@gmail.com";
+
 interface AuthContextValue {
   can: (permission: AppPermission) => boolean;
   clinic: ClinicRow | null;
@@ -24,12 +28,19 @@ interface AuthContextValue {
   displayName: string;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isSuperAdmin: boolean;
   linkedTherapistId: string | null;
   membership: ClinicMembershipRow | null;
   role: ClinicStaffRole | null;
   session: Session | null;
   user: User | null;
   userProfile: UserProfileRow | null;
+  subscription: ClinicSubscriptionExtRow | null;
+  subscriptionStatus: SubscriptionStatus | null;
+  trialEndsAt: string | null;
+  isAccessLocked: boolean;
+  upgradeRequested: boolean;
+  allowedMessageTypes: string[];
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   signUp: (params: SignUpParams) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
@@ -45,6 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [membership, setMembership] = useState<ClinicMembershipRow | null>(null);
   const [linkedTherapistId, setLinkedTherapistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(() => Boolean(supabase));
+  const [subscription, setSubscription] = useState<ClinicSubscriptionExtRow | null>(null);
 
   function clearAuthState() {
     setSession(null);
@@ -53,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setClinic(null);
     setMembership(null);
     setLinkedTherapistId(null);
+    setSubscription(null);
   }
 
   async function loadUserData(userId: string, jwtClinicId?: string) {
@@ -105,9 +118,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       setLinkedTherapistId((therapistData as { id: string } | null)?.id ?? null);
+
+      // Load subscription state
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: subData } = await (supabase as any).rpc("get_my_subscription");
+      setSubscription((subData as ClinicSubscriptionExtRow | null) ?? null);
     } else {
       setClinic(null);
       setLinkedTherapistId(null);
+      setSubscription(null);
     }
 
   }
@@ -200,6 +219,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const role = membership?.role ?? null;
   const displayName = userProfile?.full_name ?? user?.email ?? "User";
   const isAuthenticated = Boolean(user);
+  const isSuperAdmin = user?.email === SUPER_ADMIN_EMAIL;
+
+  const subscriptionStatus = subscription?.status ?? null;
+  const trialEndsAt = subscription?.trial_ends_at ?? null;
+  const isAccessLocked = subscription?.is_locked ?? false;
+  const upgradeRequested = subscription?.upgrade_requested_at != null;
+  const allowedMessageTypes = subscription?.allowed_message_types ?? [];
 
   return (
     <AuthContext.Provider
@@ -210,12 +236,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         displayName,
         isAuthenticated,
         isLoading,
+        isSuperAdmin,
         linkedTherapistId,
         membership,
         role,
         session,
         user,
         userProfile,
+        subscription,
+        subscriptionStatus,
+        trialEndsAt,
+        isAccessLocked,
+        upgradeRequested,
+        allowedMessageTypes,
         signIn,
         signOut,
         signUp,
