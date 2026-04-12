@@ -54,6 +54,7 @@ create table if not exists subscription_plans (
   therapist_limit integer,
   patient_limit integer,
   appointment_limit_monthly integer,
+  allowed_message_types text[] default '{}',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -65,6 +66,7 @@ create table if not exists clinic_subscriptions (
   status text not null default 'trialing',
   stripe_customer_id text unique,
   stripe_subscription_id text unique,
+  upgrade_requested_at timestamptz,
   trial_ends_at timestamptz,
   current_period_start timestamptz,
   current_period_end timestamptz,
@@ -667,28 +669,62 @@ returns text as $$
 $$ language sql stable;
 
 create or replace function is_active_clinic_member(target_clinic_id uuid)
-returns boolean as $$
-  -- If a clinic_id JWT claim exists, enforce it; otherwise fall back to membership table.
-  -- This allows the app to work without a custom access token hook while still being secure.
-  select
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+-- SECURITY DEFINER: bypasses RLS on the inner clinic_memberships query to prevent
+-- infinite recursion (clinic_memberships RLS -> has_clinic_role -> clinic_memberships -> ...).
+begin
+  return (
     auth.uid() is not null
     and target_clinic_id is not null
-    and (current_clinic_id() is null or target_clinic_id = current_clinic_id())
+    and (
+      nullif(coalesce(
+        auth.jwt() -> 'app_metadata' ->> 'clinic_id',
+        auth.jwt() ->> 'clinic_id'
+      ), '')::uuid is null
+      or target_clinic_id = nullif(coalesce(
+        auth.jwt() -> 'app_metadata' ->> 'clinic_id',
+        auth.jwt() ->> 'clinic_id'
+      ), '')::uuid
+    )
     and exists (
       select 1
       from clinic_memberships cm
       where cm.user_id = auth.uid()
         and cm.clinic_id = target_clinic_id
         and cm.status = 'active'
-    );
-$$ language sql stable;
+    )
+  );
+end;
+$$;
 
 create or replace function has_clinic_role(target_clinic_id uuid, allowed_roles text[])
-returns boolean as $$
-  select
+returns boolean
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+-- SECURITY DEFINER: bypasses RLS on the inner clinic_memberships query to prevent
+-- infinite recursion (clinic_memberships RLS -> has_clinic_role -> clinic_memberships -> ...).
+begin
+  return (
     auth.uid() is not null
     and target_clinic_id is not null
-    and (current_clinic_id() is null or target_clinic_id = current_clinic_id())
+    and (
+      nullif(coalesce(
+        auth.jwt() -> 'app_metadata' ->> 'clinic_id',
+        auth.jwt() ->> 'clinic_id'
+      ), '')::uuid is null
+      or target_clinic_id = nullif(coalesce(
+        auth.jwt() -> 'app_metadata' ->> 'clinic_id',
+        auth.jwt() ->> 'clinic_id'
+      ), '')::uuid
+    )
     and exists (
       select 1
       from clinic_memberships cm
@@ -696,8 +732,10 @@ returns boolean as $$
         and cm.clinic_id = target_clinic_id
         and cm.status = 'active'
         and cm.role = any(allowed_roles)
-    );
-$$ language sql stable;
+    )
+  );
+end;
+$$;
 
 create or replace function is_current_user_therapist(target_clinic_id uuid, target_therapist_id uuid)
 returns boolean as $$
@@ -867,10 +905,110 @@ begin
     'starter',
     'trialing',
     now() + interval '14 days',
+    now() + interval '7 days',
     now(),
     now() + interval '14 days'
+    now() + interval '7 days'
   )
   on conflict (clinic_id) do nothing;
+-- SUBSCRIPTION ACCESS CONTROL
+create or replace function is_subscription_locked(p_clinic_id uuid)
+returns boolean
+language plpgsql
+stable
+security definer
+as $$
+declare
+  v_sub record;
+begin
+  -- Super admins are never locked
+  if auth.jwt() ->> 'email' = 'majedulhoqueofficials@gmail.com' then
+    return false;
+  end if;
+
+  select status, trial_ends_at into v_sub 
+  from clinic_subscriptions 
+  where clinic_id = p_clinic_id;
+
+  if not found then return true; end if;
+
+  -- Locked if trial expired and not active
+  if v_sub.status = 'trialing' and v_sub.trial_ends_at < now() then
+    return true;
+  end if;
+
+  -- Locked if past due or cancelled
+  if v_sub.status in ('past_due', 'cancelled', 'incomplete') then
+    return true;
+  end if;
+
+  return false;
+end;
+$$;
+
+-- SUPER ADMIN: APPROVE & ACTIVATE
+create or replace function sa_approve_subscription(p_clinic_id uuid, p_plan_key text default 'starter')
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  if auth.jwt() ->> 'email' != 'majedulhoqueofficials@gmail.com' then
+    raise exception 'Unauthorized';
+  end if;
+
+  update clinic_subscriptions
+  set 
+    status = 'active',
+    plan_key = p_plan_key,
+    upgrade_requested_at = null,
+    current_period_start = now(),
+    current_period_end = now() + interval '30 days',
+    updated_at = now()
+  where clinic_id = p_clinic_id;
+
+  -- Create initial invoice
+  insert into subscription_invoices (clinic_id, status, amount_due_cents, currency, due_at)
+  select 
+    p_clinic_id, 
+    'open', 
+    sp.monthly_price_cents, 
+    'bdt',
+    now() + interval '7 days'
+  from subscription_plans sp
+  where sp.plan_key = p_plan_key;
+end;
+$$;
+
+-- CLIENT: REQUEST UPGRADE
+create or replace function request_upgrade(p_clinic_id uuid)
+returns void
+language plpgsql
+security invoker
+as $$
+begin
+  update clinic_subscriptions
+  set upgrade_requested_at = now()
+  where clinic_id = p_clinic_id 
+  and is_active_clinic_member(p_clinic_id);
+end;
+$$;
+
+-- SEED UPDATED PLANS (BASIC)
+insert into subscription_plans (
+  plan_key, name, monthly_price_cents, allowed_message_types
+)
+values (
+  'starter', 
+  'Basic', 
+  500000, -- 5,000 BDT in minor units
+  array['session_reminder', 'missed_session']
+)
+on conflict (plan_key) do update
+set 
+  name = excluded.name,
+  monthly_price_cents = excluded.monthly_price_cents,
+  allowed_message_types = excluded.allowed_message_types;
 
   return v_clinic_id;
 end;

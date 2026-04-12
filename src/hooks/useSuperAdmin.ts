@@ -166,6 +166,52 @@ export async function updateSubscription(params: {
   return { error: null };
 }
 
+export async function updateClinic(params: {
+  clinic_id: string;
+  name?: string;
+}): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Supabase not configured" };
+  const { error } = await supabase.rpc("sa_update_clinic", {
+    p_clinic_id: params.clinic_id,
+    p_name: params.name ?? null,
+  });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function deleteTenant(clinicId: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Supabase not configured" };
+  const { error } = await supabase.rpc("sa_delete_tenant", { p_clinic_id: clinicId });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function updateInvoice(params: {
+  invoice_id: string;
+  status?: string;
+  amount_due_cents?: number;
+  due_at?: string | null;
+  paid_at?: string | null;
+}): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Supabase not configured" };
+  const { error } = await supabase.rpc("sa_update_invoice", {
+    p_invoice_id: params.invoice_id,
+    p_status: params.status ?? null,
+    p_amount_due_cents: params.amount_due_cents ?? null,
+    p_due_at: params.due_at ?? null,
+    p_paid_at: params.paid_at ?? null,
+  });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+export async function deleteInvoice(invoiceId: string): Promise<{ error: string | null }> {
+  if (!supabase) return { error: "Supabase not configured" };
+  const { error } = await supabase.rpc("sa_delete_invoice", { p_invoice_id: invoiceId });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
 export async function approveTenant(params: {
   clinic_id: string;
   plan_key?: string;

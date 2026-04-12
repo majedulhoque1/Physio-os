@@ -1,6 +1,7 @@
-import { ArrowLeft, CalendarPlus, ClipboardList, Pause, Phone, Play, User, X as XIcon } from "lucide-react";
+import { ArrowLeft, CalendarPlus, ClipboardList, ClipboardPlus, Pause, Phone, Play, User, X as XIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AddTreatmentPlanModal, type TreatmentPlanFormValues } from "@/components/shared/AddTreatmentPlanModal";
 import { BookAppointmentModal, type AppointmentFormValues } from "@/components/shared/BookAppointmentModal";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { SessionNoteModal } from "@/components/shared/SessionNoteModal";
@@ -260,6 +261,7 @@ export function PatientProfile() {
     plans,
     activePlan,
     isLoading: plansLoading,
+    createPlan,
     updatePlanStatus,
   } = useTreatmentPlans(id ? { patientId: id } : {});
 
@@ -268,6 +270,9 @@ export function PatientProfile() {
 
   const [noteTarget, setNoteTarget] = useState<AppointmentWithRelations | null>(null);
   const [isSavingNote, setIsSavingNote] = useState(false);
+
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
 
   const notesByAppointmentId = new Map(notes.map((n) => [n.appointment_id, n]));
   const patient = patients.find((item) => item.id === id) ?? null;
@@ -313,6 +318,27 @@ export function PatientProfile() {
 
     setNoteTarget(null);
     toast({ title: "Session note saved", variant: "success" });
+  }
+
+  async function handleCreatePlan(values: TreatmentPlanFormValues) {
+    if (!id) return;
+    setIsSavingPlan(true);
+    const result = await createPlan({
+      patient_id: id,
+      therapist_id: values.therapist_id,
+      total_sessions: values.total_sessions,
+      diagnosis: values.diagnosis || null,
+      notes: values.notes || null,
+    });
+    setIsSavingPlan(false);
+
+    if (result.error) {
+      toast({ title: "Could not create plan", description: result.error, variant: "error" });
+      return;
+    }
+
+    setIsPlanModalOpen(false);
+    toast({ title: "Treatment plan created", variant: "success" });
   }
 
   const assignedTherapist = patient?.assigned_therapist
@@ -435,9 +461,21 @@ export function PatientProfile() {
 
       {/* Treatment Plans */}
       <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Treatment Plans
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Treatment Plans
+          </h3>
+          {can("manage_patients") ? (
+            <button
+              type="button"
+              onClick={() => setIsPlanModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              <ClipboardPlus className="h-3.5 w-3.5" />
+              Add Plan
+            </button>
+          ) : null}
+        </div>
 
         {plansLoading ? (
           <div className="space-y-2">
@@ -538,6 +576,16 @@ export function PatientProfile() {
           clinicId={clinicId ?? ""}
         />
       ) : null}
+
+      <AddTreatmentPlanModal
+        open={isPlanModalOpen}
+        onClose={() => setIsPlanModalOpen(false)}
+        onSubmit={handleCreatePlan}
+        isSaving={isSavingPlan}
+        patientName={patient.name}
+        therapists={therapists}
+        defaultTherapistId={patient.assigned_therapist ?? undefined}
+      />
     </div>
   );
 }

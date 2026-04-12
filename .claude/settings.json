@@ -4,7 +4,16 @@
       "Bash(npm run:*)",
       "mcp__claude_ai_Supabase__execute_sql",
       "mcp__claude_ai_Supabase__apply_migration",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "Bash(find src:*)",
+      "Read(//c/Users/ONE COM BD/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/subagent-driven-development/**)",
+      "Read(//c/Users/ONE COM BD/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/requesting-code-review/**)",
+      "Bash(node -e ':*)",
+      "Read(//d/ESPERIUS/Physio os/docs/superpowers/plans/**)",
+      "Bash(ls -la supabase/migrations/202604*.sql)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

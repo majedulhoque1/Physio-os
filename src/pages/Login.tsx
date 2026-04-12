@@ -101,6 +101,16 @@ export function Login() {
           Staff accounts are created by your clinic admin.
         </p>
       </div>
+
+      {/* Hidden super admin access */}
+      <div className="fixed bottom-4 right-4">
+        <button
+          onClick={() => navigate("/super-admin/login")}
+          className="text-[10px] text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
+        >
+          System
+        </button>
+      </div>
     </div>
   );
 }

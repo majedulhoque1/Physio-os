@@ -1,0 +1,16 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]: P
+      - heading "Welcome back" [level=1] [ref=e7]
+      - paragraph [ref=e8]: Sign in to your clinic dashboard
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Email
+        - textbox "you@clinic.com" [active] [ref=e13]
+      - generic [ref=e14]:
+        - generic [ref=e15]: Password
+        - textbox "Enter your password" [ref=e16]
+      - button "Sign in" [ref=e17] [cursor=pointer]
+    - paragraph [ref=e18]: Staff accounts are created by your clinic admin.
+  - button "System" [ref=e20]

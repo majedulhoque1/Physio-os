@@ -1,0 +1,223 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e3]:
+      - link "SHAKIL." [ref=e4] [cursor=pointer]:
+        - /url: "#"
+      - list [ref=e5]:
+        - listitem [ref=e6]:
+          - link "About" [ref=e7] [cursor=pointer]:
+            - /url: "#about"
+        - listitem [ref=e8]:
+          - link "Services" [ref=e9] [cursor=pointer]:
+            - /url: "#services"
+        - listitem [ref=e10]:
+          - link "Projects" [ref=e11] [cursor=pointer]:
+            - /url: "#projects"
+        - listitem [ref=e12]:
+          - link "Contact" [ref=e13] [cursor=pointer]:
+            - /url: "#contact"
+        - listitem [ref=e14]:
+          - link "HIRE ME" [ref=e15] [cursor=pointer]:
+            - /url: "#contact"
+  - main [ref=e16]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e23]: Open to new projects
+        - generic [ref=e24]: ·
+        - img [ref=e25]
+        - generic [ref=e28]: Dhaka, Bangladesh
+      - heading "Majedul Hoque Shakil." [level=1] [ref=e29]:
+        - text: Majedul Hoque
+        - text: Shakil.
+      - paragraph [ref=e30]: Software Developer & Entrepreneur
+      - paragraph [ref=e31]: I build software systems and automated business tools that help clinics, construction companies, and small businesses across Bangladesh run better.
+      - generic [ref=e32]:
+        - generic [ref=e33]: Lovable
+        - generic [ref=e34]: Supabase
+        - generic [ref=e35]: React
+        - generic [ref=e36]: Next.js
+        - generic [ref=e37]: n8n
+        - generic [ref=e38]: Tailwind
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - img [ref=e41]
+          - generic [ref=e43]: 5+ Products Built
+        - generic [ref=e44]:
+          - generic [ref=e45]: 🇧🇩
+          - generic [ref=e46]: Market Focus
+      - generic [ref=e47]:
+        - link "HIRE ME" [ref=e48] [cursor=pointer]:
+          - /url: "#contact"
+        - link "VIEW PROJECTS" [ref=e49] [cursor=pointer]:
+          - /url: "#projects"
+      - img [ref=e51]
+    - generic [ref=e55]:
+      - paragraph [ref=e57]: About Me
+      - heading "I turn messy problems into clean software." [level=2] [ref=e58]:
+        - text: I turn messy problems
+        - text: into clean software.
+      - generic [ref=e59]:
+        - paragraph [ref=e60]: I work with clinics, construction companies, retailers, and small businesses across Bangladesh to build software that fits how they actually work. I help them transition to proper systems—including automated reports, digital records, online billing, and real-time dashboards—without requiring a full IT team.
+        - paragraph [ref=e61]: I don't just write code. I figure out what your business actually needs, build the simplest version that solves the real problem, and make sure your team can use it from day one without training headaches.
+      - generic [ref=e62]:
+        - paragraph [ref=e64]: Core Competencies
+        - generic [ref=e65]:
+          - generic [ref=e67]:
+            - generic [ref=e68]: Understanding Business Needs
+            - generic [ref=e69]: 95%
+          - generic [ref=e73]:
+            - generic [ref=e74]: Software Pricing for Bangladesh
+            - generic [ref=e75]: 95%
+          - generic [ref=e79]:
+            - generic [ref=e80]: Building Apps (Fast & Lean)
+            - generic [ref=e81]: 90%
+          - generic [ref=e85]:
+            - generic [ref=e86]: Database & Backend Design
+            - generic [ref=e87]: 88%
+          - generic [ref=e91]:
+            - generic [ref=e92]: Automating Repetitive Work
+            - generic [ref=e93]: 85%
+          - generic [ref=e97]:
+            - generic [ref=e98]: Adding AI to Business Software
+            - generic [ref=e99]: 82%
+    - generic [ref=e104]:
+      - generic [ref=e105]:
+        - paragraph [ref=e107]: What I Do
+        - heading "Ways I Can Help You" [level=2] [ref=e108]
+        - paragraph [ref=e109]: Whether you run a clinic, a construction company, a shop, or an office, I build commercial software that makes your operations faster and easier to manage.
+      - generic [ref=e110]:
+        - generic [ref=e112]:
+          - img [ref=e114]
+          - generic [ref=e124]:
+            - heading "Software Planning & Strategy" [level=3] [ref=e125]
+            - paragraph [ref=e126]: Not sure where to start? I map out exactly what software will solve your biggest pain points without wasting money on features you don't need.
+        - generic [ref=e128]:
+          - img [ref=e130]
+          - generic [ref=e132]:
+            - heading "Custom Business Apps" [level=3] [ref=e133]
+            - paragraph [ref=e134]: Web-based apps for patient management, staff tracking, invoicing, inventory, and reporting. No generic templates—just systems tailored to how your business runs.
+        - generic [ref=e136]:
+          - img [ref=e138]
+          - generic [ref=e143]:
+            - heading "Workflow Automation" [level=3] [ref=e144]
+            - paragraph [ref=e145]: Daily reports sent automatically, payment reminders via WhatsApp, and monthly dashboards generated instantly. Your team focuses on real work, not copy-pasting.
+        - generic [ref=e147]:
+          - img [ref=e149]
+          - generic [ref=e152]:
+            - heading "AI-Powered Features" [level=3] [ref=e153]
+            - paragraph [ref=e154]: Smart AI built inside your software for auto-generated notes, document summaries, and data entry assistance. Think of it as a fast assistant who never takes a day off.
+        - generic [ref=e156]:
+          - img [ref=e158]
+          - generic [ref=e160]:
+            - heading "Excel to Proper System" [level=3] [ref=e161]
+            - paragraph [ref=e162]: Managing projects or payments in Excel? I migrate everything into a secure database with access controls and automatic reporting. No more formula errors.
+        - generic [ref=e164]:
+          - img [ref=e166]
+          - generic [ref=e168]:
+            - heading "Built for Bangladesh" [level=3] [ref=e169]
+            - paragraph [ref=e170]: Everything I build supports bKash and Nagad payments, works smoothly on budget Android phones, handles Bengali content, and is priced to make sense for local businesses.
+    - generic [ref=e173]:
+      - generic [ref=e174]:
+        - paragraph [ref=e176]: My Work
+        - heading "Real Projects Built for Real Clients" [level=2] [ref=e177]:
+          - text: Real Projects Built
+          - text: for Real Clients
+      - generic [ref=e178]:
+        - article [ref=e179]:
+          - generic [ref=e180]:
+            - heading "UPPC PhysioOS" [level=3] [ref=e181]
+            - generic [ref=e182]: Active
+          - generic [ref=e183]:
+            - paragraph [ref=e184]: Unique Pain & Paralysis Centre · Mirpur, Dhaka
+            - paragraph [ref=e185]: A comprehensive 3-role clinic management system for a physiotherapy centre. It handles patient records, appointment booking across two daily shifts, session billing, and staff management. It features AI-assisted clinical note-writing and automated patient communication workflows, including automated appointment reminders, follow-up messages, and thank-you notifications.
+            - generic [ref=e186]:
+              - generic [ref=e187]: Lovable
+              - generic [ref=e188]: Supabase
+              - generic [ref=e189]: React
+        - article [ref=e190]:
+          - generic [ref=e191]:
+            - heading "XEN Business System" [level=3] [ref=e192]
+            - generic [ref=e193]: Delivered
+          - generic [ref=e194]:
+            - paragraph [ref=e195]: XEN Developments Ltd. · Dhaka
+            - paragraph [ref=e196]: A central management and data synchronization system for a real estate and construction company running 11 active projects. The system acts as a bridge between the backend database and daily operations, syncing clients, projects, and transactions. Features automated monthly CEO dashboards, project-level financial tracking, and bank reconciliation.
+            - generic [ref=e197]:
+              - generic [ref=e198]: Supabase
+              - generic [ref=e199]: React
+              - generic [ref=e200]: n8n
+        - article [ref=e201]:
+          - generic [ref=e202]:
+            - heading "donothing.online" [level=3] [ref=e203]
+            - generic [ref=e204]: Active
+          - generic [ref=e205]:
+            - paragraph [ref=e206]: Founder
+            - paragraph [ref=e207]: The dedicated workflow and automation engine powering background operations for my clients. I founded donothing.online to handle the heavy lifting of repetitive tasks, integrating systems via n8n to ensure zero-manual-effort reporting, notifications, and data synchronization.
+            - generic [ref=e208]:
+              - generic [ref=e209]: n8n
+              - generic [ref=e210]: Supabase
+              - generic [ref=e211]: APIs
+    - generic [ref=e214]:
+      - paragraph [ref=e216]: Tech Stack
+      - heading "Tools I Work With" [level=2] [ref=e217]
+      - paragraph [ref=e218]: A curated set of technologies I use to build fast, reliable, and scalable business software.
+      - generic [ref=e219]:
+        - generic [ref=e220]: Next.js
+        - generic [ref=e221]: React
+        - generic [ref=e222]: Tailwind CSS
+        - generic [ref=e223]: Lovable
+        - generic [ref=e224]: Supabase
+        - generic [ref=e225]: n8n
+        - generic [ref=e226]: Claude API
+        - generic [ref=e227]: Gemini API
+        - generic [ref=e228]: Apps Script
+        - generic [ref=e229]: PostgreSQL
+        - generic [ref=e230]: TypeScript
+        - generic [ref=e231]: Vercel
+    - generic [ref=e234]:
+      - generic [ref=e235]:
+        - paragraph [ref=e237]: Get in Touch
+        - heading "Got a project in mind? Let's talk." [level=2] [ref=e238]:
+          - text: Got a project in mind?
+          - text: Let's talk.
+        - paragraph [ref=e239]: Tell me what you're trying to solve. Whether it's a small automation or a full business system, I'll give you an honest answer about what it takes, how long it will take, and what it costs. No jargon, no surprises.
+      - generic [ref=e240]:
+        - link "WhatsApp (preferred) +8801603493249" [ref=e241] [cursor=pointer]:
+          - /url: https://wa.me/8801603493249
+          - img [ref=e243]
+          - generic [ref=e245]:
+            - paragraph [ref=e246]: WhatsApp (preferred)
+            - paragraph [ref=e247]: "+8801603493249"
+        - link "Email majedulhoqueofficial@gmail.com" [ref=e248] [cursor=pointer]:
+          - /url: mailto:majedulhoqueofficial@gmail.com
+          - img [ref=e250]
+          - generic [ref=e253]:
+            - paragraph [ref=e254]: Email
+            - paragraph [ref=e255]: majedulhoqueofficial@gmail.com
+        - link "LinkedIn linkedin.com/in/yourprofile" [ref=e256] [cursor=pointer]:
+          - /url: https://linkedin.com/in/yourprofile
+          - img [ref=e258]
+          - generic [ref=e262]:
+            - paragraph [ref=e263]: LinkedIn
+            - paragraph [ref=e264]: linkedin.com/in/yourprofile
+        - generic [ref=e265]:
+          - img [ref=e267]
+          - generic [ref=e270]:
+            - paragraph [ref=e271]: Location
+            - paragraph [ref=e272]: Dhaka, Bangladesh
+  - contentinfo [ref=e273]:
+    - generic [ref=e274]:
+      - generic [ref=e275]:
+        - generic [ref=e276]: SHAKIL.
+        - generic [ref=e277]: © 2026
+      - paragraph [ref=e278]: Built with ❤️ in Dhaka, Bangladesh
+      - generic [ref=e279]:
+        - link "GitHub" [ref=e280] [cursor=pointer]:
+          - /url: https://github.com/yourprofile
+          - img [ref=e281]
+        - link "LinkedIn" [ref=e284] [cursor=pointer]:
+          - /url: https://linkedin.com/in/yourprofile
+          - img [ref=e285]
+        - link "Email" [ref=e289] [cursor=pointer]:
+          - /url: mailto:majedulhoqueofficial@gmail.com
+          - img [ref=e290]
+  - alert [ref=e293]
