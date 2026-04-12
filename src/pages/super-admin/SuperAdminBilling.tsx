@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, CreditCard, Zap } from "lucide-react";
 import { useUpgradePendingList, useSAInvoiceList } from "@/hooks/useSubscription";
 import { approveTenant } from "@/hooks/useSuperAdmin";
@@ -9,17 +9,25 @@ export function SuperAdminBilling() {
   const { invoices, isLoading: invLoading, error: invError, refetch: refetchInvoices } =
     useSAInvoiceList();
 
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<string | null>(null);
+
   useEffect(() => {
     refetchRequests();
     refetchInvoices();
   }, [refetchRequests, refetchInvoices]);
 
   async function handleApprove(clinicId: string) {
+    setApprovingId(clinicId);
+    setApproveError(null);
     const result = await approveTenant({ clinic_id: clinicId, plan_key: "starter" });
-    if (!result.error) {
-      refetchRequests();
-      refetchInvoices();
+    setApprovingId(null);
+    if (result.error) {
+      setApproveError(result.error);
+      return;
     }
+    refetchRequests();
+    refetchInvoices();
   }
 
   return (
@@ -108,9 +116,10 @@ export function SuperAdminBilling() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleApprove(r.clinic_id)}
-                        className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700 transition-colors"
+                        disabled={approvingId === r.clinic_id}
+                        className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-700 disabled:opacity-60 transition-colors"
                       >
-                        Approve
+                        {approvingId === r.clinic_id ? "..." : "Approve"}
                       </button>
                     </td>
                   </tr>
@@ -119,6 +128,9 @@ export function SuperAdminBilling() {
             </tbody>
           </table>
         </div>
+        {approveError && (
+          <p className="mt-2 text-sm text-red-600">{approveError}</p>
+        )}
       </section>
 
       {/* Invoice History */}
