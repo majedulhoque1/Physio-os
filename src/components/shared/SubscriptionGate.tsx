@@ -19,14 +19,14 @@ export function SubscriptionGate() {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-gray-950/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/70 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="subscription-gate-title">
       <div className="mx-4 w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-2xl text-center">
         <div className="mb-4 flex justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50">
             <Lock className="h-7 w-7 text-red-500" />
           </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-900">Access Paused</h2>
+        <h2 id="subscription-gate-title" className="text-lg font-bold text-gray-900">Access Paused</h2>
         <p className="mt-2 text-sm text-gray-500">
           Your free trial has ended. Request an upgrade to continue using Physio OS.
         </p>
