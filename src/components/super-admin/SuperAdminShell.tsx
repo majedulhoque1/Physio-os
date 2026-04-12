@@ -54,12 +54,12 @@ export function SuperAdminShell() {
         >
           <div
             className="flex h-8 w-8 items-center justify-center"
-            style={{ background: "#000", border: "2px solid #000" }}
+            style={{ background: "#000", border: "2px solid #4ADE80" }}
           >
             <Shield className="h-4 w-4" style={{ color: "#4ADE80" }} />
           </div>
           <div>
-            <p className="nb-heading text-sm text-black leading-none">Physio OS</p>
+            <p className="nb-heading text-sm text-black">Physio OS</p>
             <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider font-bold">System Admin</p>
           </div>
           <button
