@@ -1,3 +1,4 @@
+import { TrialBanner } from './components/shared/TrialBanner';
 import type { ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
@@ -60,109 +61,114 @@ function RoleRoute({
 }
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
 
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate replace to="/" /> : <Login />}
-      />
+    <>
+      {/* The banner is placed here, restricted to clinic_admin */}
+      <TrialBanner />
+      
+      <Routes>
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate replace to="/" /> : <Login />}
+        />
 
-      {/* Super Admin */}
-      <Route path="/super-admin/login" element={<SuperAdminLogin />} />
-      <Route
-        path="/super-admin"
-        element={
-          <SuperAdminRoute>
-            <SuperAdminShell />
-          </SuperAdminRoute>
-        }
-      >
-        <Route index element={<SuperAdminDashboard />} />
-        <Route path="tenants" element={<SuperAdminTenants />} />
-        <Route path="tenants/:id" element={<SuperAdminTenantDetail />} />
-        <Route path="billing" element={<SuperAdminBilling />} />
-        <Route path="settings" element={<SuperAdminSettings />} />
-      </Route>
+        {/* Super Admin */}
+        <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+        <Route
+          path="/super-admin"
+          element={
+            <SuperAdminRoute>
+              <SuperAdminShell />
+            </SuperAdminRoute>
+          }
+        >
+          <Route index element={<SuperAdminDashboard />} />
+          <Route path="tenants" element={<SuperAdminTenants />} />
+          <Route path="tenants/:id" element={<SuperAdminTenantDetail />} />
+          <Route path="billing" element={<SuperAdminBilling />} />
+          <Route path="settings" element={<SuperAdminSettings />} />
+        </Route>
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <AppShell />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={withBoundary(<Dashboard />)} />
-        <Route path="leads" element={<Navigate replace to="/patients?new=1" />} />
         <Route
-          path="appointments"
-          element={withBoundary(
-            <RoleRoute path="/appointments">
-              <Appointments />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="patients"
-          element={withBoundary(
-            <RoleRoute path="/patients">
-              <Patients />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="patients/:id"
-          element={withBoundary(
-            <RoleRoute path="/patients/:id">
-              <PatientProfile />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="therapists"
-          element={withBoundary(
-            <RoleRoute path="/therapists">
-              <Therapists />
-            </RoleRoute>,
-          )}
-        />
-        <Route path="workspace" element={<Navigate replace to="/therapists" />} />
-        <Route
-          path="billing"
-          element={withBoundary(
-            <RoleRoute path="/billing">
-              <Billing />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="analytics"
-          element={withBoundary(
-            <RoleRoute path="/analytics">
-              <Analytics />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="messages"
-          element={withBoundary(
-            <RoleRoute path="/messages">
-              <MessageLog />
-            </RoleRoute>,
-          )}
-        />
-        <Route
-          path="settings"
-          element={withBoundary(
-            <RoleRoute path="/settings">
-              <Settings />
-            </RoleRoute>,
-          )}
-        />
-        <Route path="*" element={<Navigate replace to="/" />} />
-      </Route>
-    </Routes>
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={withBoundary(<Dashboard />)} />
+          <Route path="leads" element={<Navigate replace to="/patients?new=1" />} />
+          <Route
+            path="appointments"
+            element={withBoundary(
+              <RoleRoute path="/appointments">
+                <Appointments />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="patients"
+            element={withBoundary(
+              <RoleRoute path="/patients">
+                <Patients />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="patients/:id"
+            element={withBoundary(
+              <RoleRoute path="/patients/:id">
+                <PatientProfile />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="therapists"
+            element={withBoundary(
+              <RoleRoute path="/therapists">
+                <Therapists />
+              </RoleRoute>,
+            )}
+          />
+          <Route path="workspace" element={<Navigate replace to="/therapists" />} />
+          <Route
+            path="billing"
+            element={withBoundary(
+              <RoleRoute path="/billing">
+                <Billing />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="analytics"
+            element={withBoundary(
+              <RoleRoute path="/analytics">
+                <Analytics />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="messages"
+            element={withBoundary(
+              <RoleRoute path="/messages">
+                <MessageLog />
+              </RoleRoute>,
+            )}
+          />
+          <Route
+            path="settings"
+            element={withBoundary(
+              <RoleRoute path="/settings">
+                <Settings />
+              </RoleRoute>,
+            )}
+          />
+          <Route path="*" element={<Navigate replace to="/" />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
 
