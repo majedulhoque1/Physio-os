@@ -4,6 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PageErrorBoundary } from "@/components/shared/PageErrorBoundary";
 import { useAuth } from "@/contexts/AuthContext";
 import { canAccessPath } from "@/lib/permissions";
+import { SuperAdminShell } from "@/components/super-admin/SuperAdminShell";
+import { SuperAdminRoute } from "@/lib/superAdminGuard";
 import { Analytics } from "@/pages/Analytics";
 import { Appointments } from "@/pages/Appointments";
 import { Billing } from "@/pages/Billing";
@@ -13,6 +15,12 @@ import { MessageLog } from "@/pages/MessageLog";
 import { PatientProfile } from "@/pages/PatientProfile";
 import { Patients } from "@/pages/Patients";
 import { Settings } from "@/pages/Settings";
+import { SuperAdminDashboard } from "@/pages/super-admin/SuperAdminDashboard";
+import { SuperAdminLogin } from "@/pages/super-admin/SuperAdminLogin";
+import { SuperAdminSettings } from "@/pages/super-admin/SuperAdminSettings";
+import { SuperAdminTenantDetail } from "@/pages/super-admin/SuperAdminTenantDetail";
+import { SuperAdminBilling } from "@/pages/super-admin/SuperAdminBilling";
+import { SuperAdminTenants } from "@/pages/super-admin/SuperAdminTenants";
 import { Therapists } from "@/pages/Therapists";
 
 function withBoundary(element: ReactNode) {
@@ -60,6 +68,23 @@ function App() {
         path="/login"
         element={isAuthenticated ? <Navigate replace to="/" /> : <Login />}
       />
+
+      {/* Super Admin */}
+      <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+      <Route
+        path="/super-admin"
+        element={
+          <SuperAdminRoute>
+            <SuperAdminShell />
+          </SuperAdminRoute>
+        }
+      >
+        <Route index element={<SuperAdminDashboard />} />
+        <Route path="tenants" element={<SuperAdminTenants />} />
+        <Route path="tenants/:id" element={<SuperAdminTenantDetail />} />
+        <Route path="billing" element={<SuperAdminBilling />} />
+        <Route path="settings" element={<SuperAdminSettings />} />
+      </Route>
 
       <Route
         element={
