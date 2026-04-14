@@ -1,21 +1,27 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
+  Package,
   Building2,
+  HardHat,
   CreditCard,
   LogOut,
   Menu,
   X,
   Shield,
+  ChevronDown,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProducts } from "@/hooks/useProducts";
 import "../../styles/super-admin.css";
 
-const navItems = [
-  { to: "/super-admin", icon: LayoutDashboard, label: "Overview", end: true },
-  { to: "/super-admin/tenants", icon: Building2, label: "Tenants", end: false },
+const topNav = [
+  { to: "/super-admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+];
+
+const bottomNav = [
   { to: "/super-admin/billing", icon: CreditCard, label: "Billing", end: false },
   { to: "/super-admin/settings", icon: SettingsIcon, label: "Settings", end: false },
 ];
@@ -23,7 +29,22 @@ const navItems = [
 export function SuperAdminShell() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(
+    location.pathname.startsWith("/super-admin/products"),
+  );
+  const { products } = useProducts({ onlyActive: true });
+  const iconMap: Record<string, typeof Building2> = {
+    building: Building2,
+    hardhat: HardHat,
+    package: Package,
+  };
+  const productItems = products.map((p) => ({
+    to: `/super-admin/products/${p.product_key}`,
+    icon: iconMap[p.icon_key ?? ""] ?? Package,
+    label: p.display_name,
+  }));
 
   async function handleSignOut() {
     await signOut();
@@ -72,7 +93,7 @@ export function SuperAdminShell() {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => (
+          {topNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -80,16 +101,70 @@ export function SuperAdminShell() {
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2 text-sm font-bold transition-all ${
-                  isActive
-                    ? "bg-[#4ADE80] text-black"
-                    : "text-black hover:bg-yellow-100"
+                  isActive ? "bg-[#4ADE80] text-black" : "text-black hover:bg-yellow-100"
                 }`
               }
-              style={({ isActive }) =>
-                isActive
-                  ? { border: "2px solid #000", borderRadius: "2px" }
-                  : { border: "2px solid transparent", borderRadius: "2px" }
+              style={({ isActive }) => ({
+                border: isActive ? "2px solid #000" : "2px solid transparent",
+                borderRadius: "2px",
+              })}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </NavLink>
+          ))}
+
+          {/* Products domain */}
+          <button
+            onClick={() => setProductsOpen((o) => !o)}
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm font-bold text-black hover:bg-yellow-100 transition-all"
+            style={{ border: "2px solid transparent", borderRadius: "2px" }}
+          >
+            <Package className="h-4 w-4" />
+            Products
+            <ChevronDown
+              className={`h-3.5 w-3.5 ml-auto transition-transform ${productsOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+          {productsOpen && (
+            <div className="ml-3 space-y-1" style={{ borderLeft: "2px solid #000", paddingLeft: "8px" }}>
+              {productItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-2.5 py-1.5 text-xs font-bold transition-all ${
+                      isActive ? "bg-[#4ADE80] text-black" : "text-black hover:bg-yellow-100"
+                    }`
+                  }
+                  style={({ isActive }) => ({
+                    border: isActive ? "2px solid #000" : "2px solid transparent",
+                    borderRadius: "2px",
+                  })}
+                >
+                  <item.icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </NavLink>
+              ))}
+            </div>
+          )}
+
+          {bottomNav.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-3 py-2 text-sm font-bold transition-all ${
+                  isActive ? "bg-[#4ADE80] text-black" : "text-black hover:bg-yellow-100"
+                }`
               }
+              style={({ isActive }) => ({
+                border: isActive ? "2px solid #000" : "2px solid transparent",
+                borderRadius: "2px",
+              })}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
