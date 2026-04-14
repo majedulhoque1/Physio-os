@@ -22,6 +22,8 @@ import { SuperAdminSettings } from "@/pages/super-admin/SuperAdminSettings";
 import { SuperAdminTenantDetail } from "@/pages/super-admin/SuperAdminTenantDetail";
 import { SuperAdminBilling } from "@/pages/super-admin/SuperAdminBilling";
 import { SuperAdminTenants } from "@/pages/super-admin/SuperAdminTenants";
+import ProductTenants from "@/pages/super-admin/products/ProductTenants";
+import ProductTenantDetail from "@/pages/super-admin/products/ProductTenantDetail";
 import { Therapists } from "@/pages/Therapists";
 
 function withBoundary(element: ReactNode) {
@@ -61,7 +63,7 @@ function RoleRoute({
 }
 
 function App() {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
@@ -85,8 +87,12 @@ function App() {
           }
         >
           <Route index element={<SuperAdminDashboard />} />
-          <Route path="tenants" element={<SuperAdminTenants />} />
+          <Route path="tenants" element={<Navigate replace to="/super-admin/products/physio_os" />} />
           <Route path="tenants/:id" element={<SuperAdminTenantDetail />} />
+          <Route path="products/physio_os" element={<SuperAdminTenants />} />
+          <Route path="products/physio_os/:id" element={<SuperAdminTenantDetail />} />
+          <Route path="products/:productKey" element={<ProductTenants />} />
+          <Route path="products/:productKey/tenants/:externalId" element={<ProductTenantDetail />} />
           <Route path="billing" element={<SuperAdminBilling />} />
           <Route path="settings" element={<SuperAdminSettings />} />
         </Route>
