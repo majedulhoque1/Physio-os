@@ -33,7 +33,6 @@ export function SuperAdminSettings() {
 
     setIsLoading(true);
 
-    // Verify current password by attempting re-auth
     const { error: signInErr } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: currentPassword,
@@ -63,88 +62,102 @@ export function SuperAdminSettings() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-1 text-sm text-gray-500">
+    <div className="space-y-6">
+      <div>
+        <h1 className="nb-heading text-4xl text-black">Settings</h1>
+        <p className="mt-1 text-sm font-bold text-gray-600 uppercase tracking-wide">
           Manage your super admin account
         </p>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100">
-            <KeyRound className="h-4 w-4 text-gray-600" />
+      <div className="max-w-lg">
+        <div className="nb-card p-6">
+          {/* Section header */}
+          <div className="mb-6 flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center"
+              style={{ background: "#B4E7FF", border: "2px solid #000", borderRadius: "2px" }}
+            >
+              <KeyRound className="h-5 w-5 text-black" />
+            </div>
+            <div>
+              <p className="nb-heading text-lg text-black">Change Password</p>
+              <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+                Update your admin password
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-semibold text-gray-900">Change Password</h2>
-            <p className="text-xs text-gray-500">Update your admin password</p>
-          </div>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-black uppercase tracking-wide">
+                Current password
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="nb-input w-full px-3 py-2.5 text-sm text-black"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-black uppercase tracking-wide">
+                New password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={8}
+                className="nb-input w-full px-3 py-2.5 text-sm text-black"
+              />
+              <p className="mt-1 text-xs font-bold text-gray-500">Minimum 8 characters</p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-bold text-black uppercase tracking-wide">
+                Confirm new password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="nb-input w-full px-3 py-2.5 text-sm text-black"
+              />
+            </div>
+
+            {error && (
+              <div
+                className="px-4 py-3 text-sm font-bold text-black"
+                style={{ border: "2px solid #000", background: "#FF79C6", borderRadius: "2px" }}
+              >
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div
+                className="flex items-center gap-2 px-4 py-3 text-sm font-bold text-black"
+                style={{ border: "2px solid #000", background: "#4ADE80", borderRadius: "2px" }}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Password updated successfully
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="nb-btn bg-black px-5 py-2.5 text-sm text-white"
+            >
+              {isLoading ? "Updating..." : "Update password"}
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Current password
-            </label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              New password
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              minLength={8}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-            />
-            <p className="mt-1 text-xs text-gray-400">Minimum 8 characters</p>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
-              Confirm new password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
-            />
-          </div>
-
-          {error && (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
-              {error}
-            </p>
-          )}
-
-          {success && (
-            <p className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" />
-              Password updated successfully
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-700 active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
-          >
-            {isLoading ? "Updating..." : "Update password"}
-          </button>
-        </form>
       </div>
     </div>
   );
