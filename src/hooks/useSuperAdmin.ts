@@ -12,10 +12,11 @@ import type {
 const supabase = supabaseClient as any;
 
 export interface PlatformStats {
-  total_clinics: number;
+  total_tenants: number;
   total_users: number;
   active_subscriptions: number;
   mrr_cents: number;
+  by_product: Array<{ product_key: string; tenants: number }> | null;
 }
 
 export interface TenantListItem {
@@ -27,6 +28,10 @@ export interface TenantListItem {
   plan_key: string | null;
   subscription_status: string | null;
   created_at: string;
+  // unified cross-product fields
+  product_key: string;
+  external_id: string;
+  tenant_id?: string;
 }
 
 export interface TenantDetail {
@@ -65,7 +70,7 @@ export function usePlatformStats() {
     if (!supabase) return;
     setIsLoading(true);
     supabase
-      .rpc("sa_platform_stats")
+      .rpc("sa_platform_stats_v2")
       .then(({ data, error: err }: { data: PlatformStats | null; error: { message: string } | null }) => {
         if (err) setError(err.message);
         else setStats(data);
@@ -85,11 +90,7 @@ export function useTenantList(search: string) {
     if (!supabase) return;
     setIsLoading(true);
     supabase
-      .rpc("sa_list_tenants", {
-        p_search: search || null,
-        p_limit: 50,
-        p_offset: 0,
-      })
+      .rpc("sa_list_all_tenants", { p_search: search || null })
       .then(({ data, error: err }: { data: TenantListItem[] | null; error: { message: string } | null }) => {
         if (err) setError(err.message);
         else setTenants(data ?? []);
@@ -133,6 +134,7 @@ export async function createTenant(params: {
   owner_email: string;
   plan_key: string;
   trial_end: string | null;
+  temp_password: string;
 }) {
   if (!supabase) return { error: "Supabase not configured", clinicId: null };
 
@@ -141,6 +143,7 @@ export async function createTenant(params: {
     p_owner_email: params.owner_email,
     p_plan_key: params.plan_key,
     p_trial_end: params.trial_end,
+    p_temp_password: params.temp_password,
   });
 
   if (error) return { error: error.message, clinicId: null };

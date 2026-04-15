@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle, CreditCard, Zap } from "lucide-react";
 import { useUpgradePendingList, useSAInvoiceList } from "@/hooks/useSubscription";
 import { approveTenant } from "@/hooks/useSuperAdmin";
+import { useProducts } from "@/hooks/useProducts";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "#4ADE80",
@@ -32,6 +33,8 @@ export function SuperAdminBilling() {
 
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [approveError, setApproveError] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const { products } = useProducts({ onlyActive: true });
 
   useEffect(() => {
     refetchRequests();
@@ -55,6 +58,21 @@ export function SuperAdminBilling() {
         <p className="mt-1 text-sm font-bold text-gray-600 uppercase tracking-wide">
           Manage plans, approve upgrades, and view invoice history
         </p>
+      </div>
+
+      {/* Product filter */}
+      <div className="flex items-center gap-3">
+        <label className="text-sm font-bold text-black uppercase tracking-wide">Product</label>
+        <select
+          value={selectedProduct}
+          onChange={(e) => setSelectedProduct(e.target.value)}
+          className="nb-input px-3 py-2 text-sm text-black"
+        >
+          <option value="">All products</option>
+          {products.map((p) => (
+            <option key={p.product_key} value={p.product_key}>{p.display_name}</option>
+          ))}
+        </select>
       </div>
 
       {/* Plan Catalog */}

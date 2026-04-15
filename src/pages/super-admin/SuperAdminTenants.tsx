@@ -83,6 +83,7 @@ export function SuperAdminTenants() {
           <thead>
             <tr>
               <th>Clinic</th>
+              <th>Product</th>
               <th>Owner</th>
               <th>Plan</th>
               <th>Status</th>
@@ -93,13 +94,13 @@ export function SuperAdminTenants() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center font-bold text-gray-500">
+                <td colSpan={7} className="py-12 text-center font-bold text-gray-500">
                   Loading tenants...
                 </td>
               </tr>
             ) : tenants.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center font-bold text-gray-500">
+                <td colSpan={7} className="py-12 text-center font-bold text-gray-500">
                   {search ? "No tenants match your search" : "No tenants yet"}
                 </td>
               </tr>
@@ -108,10 +109,17 @@ export function SuperAdminTenants() {
                 <tr key={t.clinic_id}>
                   <td
                     className="cursor-pointer"
-                    onClick={() => navigate(`/super-admin/tenants/${t.clinic_id}`)}
+                    onClick={() =>
+                      t.product_key && t.product_key !== "physio_os"
+                        ? navigate(`/super-admin/products/${t.product_key}/tenants/${t.external_id}`)
+                        : navigate(`/super-admin/tenants/${t.clinic_id}`)
+                    }
                   >
                     <p className="font-bold text-black">{t.clinic_name}</p>
                     <p className="text-xs text-gray-500">{t.slug}</p>
+                  </td>
+                  <td>
+                    <span className="nb-badge bg-black text-white text-xs">{t.product_key || "physio_os"}</span>
                   </td>
                   <td className="font-medium text-gray-700">{t.owner_email ?? "—"}</td>
                   <td>
