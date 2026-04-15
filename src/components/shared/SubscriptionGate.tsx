@@ -4,11 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { requestUpgrade } from "@/hooks/useSubscription";
 
 export function SubscriptionGate() {
-  const { isAccessLocked, isSuperAdmin, clinicId, upgradeRequested } = useAuth();
+  const { isAccessLocked, isSuperAdmin, role, clinicId, upgradeRequested } = useAuth();
   const [requesting, setRequesting] = useState(false);
   const [requested, setRequested] = useState(false);
 
-  if (!isAccessLocked || isSuperAdmin) return null;
+  if (!isAccessLocked || isSuperAdmin || role === "clinic_admin") return null;
 
   async function handleUpgrade() {
     if (!clinicId || requesting) return;
