@@ -24,6 +24,7 @@ import { SuperAdminBilling } from "@/pages/super-admin/SuperAdminBilling";
 import { SuperAdminTenants } from "@/pages/super-admin/SuperAdminTenants";
 import ProductTenants from "@/pages/super-admin/products/ProductTenants";
 import ProductTenantDetail from "@/pages/super-admin/products/ProductTenantDetail";
+import SuperAdminProducts from "@/pages/super-admin/SuperAdminProducts";
 import { Therapists } from "@/pages/Therapists";
 
 function withBoundary(element: ReactNode) {
@@ -95,6 +96,7 @@ function App() {
           <Route path="products/:productKey/tenants/:externalId" element={<ProductTenantDetail />} />
           <Route path="billing" element={<SuperAdminBilling />} />
           <Route path="settings" element={<SuperAdminSettings />} />
+          <Route path="settings/products" element={<SuperAdminProducts />} />
         </Route>
 
         <Route
