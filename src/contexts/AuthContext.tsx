@@ -19,7 +19,7 @@ export interface SignUpParams {
   password: string;
 }
 
-const SUPER_ADMIN_EMAIL = "majedulhoqueofficials@gmail.com";
+const SUPER_ADMIN_EMAIL = "majedulhoqueofficial@gmail.com";
 
 interface AuthContextValue {
   can: (permission: AppPermission) => boolean;

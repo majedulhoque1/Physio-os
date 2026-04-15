@@ -4,7 +4,7 @@ import { Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import "@/styles/super-admin.css";
 
-const SA_EMAIL = "majedulhoqueofficials@gmail.com";
+const SA_EMAIL = "majedulhoqueofficial@gmail.com";
 
 export function SuperAdminLogin() {
   const { signIn, isAuthenticated, isSuperAdmin } = useAuth();

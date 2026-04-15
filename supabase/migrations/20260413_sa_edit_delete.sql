@@ -47,6 +47,7 @@ begin
   delete from subscription_invoices where clinic_id = p_clinic_id;
   delete from clinic_subscriptions where clinic_id = p_clinic_id;
   delete from clinic_memberships where clinic_id = p_clinic_id;
+  delete from clinic_settings where clinic_id = p_clinic_id;
 
   delete from clinics where id = p_clinic_id;
 

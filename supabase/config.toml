@@ -1,0 +1,2 @@
+[functions.construction-os-bridge]
+verify_jwt = false

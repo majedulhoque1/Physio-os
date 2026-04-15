@@ -13,7 +13,11 @@
       "Bash(node -e ':*)",
       "Read(//d/ESPERIUS/Physio os/docs/superpowers/plans/**)",
       "Bash(ls -la supabase/migrations/202604*.sql)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(node -e \"const css=require\\('fs'\\).readFileSync\\('src/styles/super-admin.css','utf8'\\); const global=['body','html',':root','*']; global.forEach\\(s=>{ if\\(css.includes\\(s\\)\\) console.log\\('GLOBAL SELECTOR FOUND:',s\\); }\\); console.log\\('Check done'\\);\")",
+      "Bash(grep -A 5 \"clinic_subscriptions\" \"d:\\\\EXPERIUS\\\\Physio os\\\\supabase\\\\migrations\"/*.sql)",
+      "Bash(export SUPABASE_ACCESS_TOKEN=sbp_615a4ad1eb02efbbf1276c5d2f5629d1febc7a1a)",
+      "Bash(supabase functions:*)"
     ]
   }
 }

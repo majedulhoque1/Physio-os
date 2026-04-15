@@ -1,10 +1,8 @@
 /* ─── Neobrutalism primitives for Super Admin only ─── */
 /* Imported once in SuperAdminShell.tsx — never affects clinic dashboard */
 
-/* Polka-dot page background — apply to <main> */
+/* Plain white page background — apply to <main> */
 .nb-bg {
-  background-image: radial-gradient(#000 1.5px, transparent 1.5px);
-  background-size: 20px 20px;
   background-color: #ffffff;
 }
 

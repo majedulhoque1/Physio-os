@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
   AlertTriangle,
+  Calendar,
   CalendarPlus,
   ChevronRight,
   CreditCard,
@@ -88,7 +89,7 @@ const alertIconColor: Record<StatusTone, string> = {
 };
 
 export function AdminDashboard() {
-  const { can } = useAuth();
+  const { can, subscription, subscriptionStatus, trialEndsAt } = useAuth();
   const { data, error, isLoading, source } = useDashboard();
 
   const utilization = useMemo(() => buildUtilization(data.appointments), [data.appointments]);
@@ -124,6 +125,36 @@ export function AdminDashboard() {
           <div>
             <p className="font-semibold text-amber-900">Showing sample data</p>
             <p className="mt-0.5 text-amber-700">{error}</p>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ── SUBSCRIPTION STATUS ────────────────────────────────── */}
+      {subscription ? (
+        <section className="rounded-xl border border-border bg-white p-5 shadow-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/8">
+                <CreditCard className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Subscription</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {subscription.plan_key} · {subscriptionStatus || "—"}
+                </p>
+              </div>
+            </div>
+            {trialEndsAt && (
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="text-right">
+                  <p className="text-xs font-medium text-muted-foreground">Trial ends</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {new Date(trialEndsAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       ) : null}

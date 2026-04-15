@@ -142,16 +142,26 @@ export function useTreatmentPlans({ patientId }: { patientId?: string } = {}) {
       if (!clinicId) return { error: "No clinic context", planId: null };
 
       const payload: PlanInsert = {
+        abandoned_at: null,
         clinic_id: clinicId,
+        completed_at: null,
         diagnosis: input.diagnosis ?? null,
+        fee_per_session: null,
+        frequency_per_week: null,
+        interventions: null,
+        long_term_goals: null,
         notes: input.notes ?? null,
         patient_id: input.patient_id,
+        patient_instructions: null,
+        precautions: null,
+        reassessment_date: null,
+        short_term_goals: null,
+        package_name: null,
         status: "active",
-        therapist_id: input.therapist_id,
-        total_sessions: input.total_sessions,
         started_at: null,
-        completed_at: null,
-        abandoned_at: null,
+        therapist_id: input.therapist_id,
+        total_fee: null,
+        total_sessions: input.total_sessions,
       };
 
       const { data, error } = await supabase

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  CreditCard,
   Users,
   Stethoscope,
   CalendarDays,
@@ -16,6 +17,23 @@ import {
   useTenantAppointments,
   useTenantTreatmentPlans,
 } from "@/hooks/useSuperAdmin";
+import { useSAInvoiceList } from "@/hooks/useSubscription";
+
+const INVOICE_STATUS_COLORS: Record<string, string> = {
+  paid: "bg-green-50 text-green-700",
+  open: "bg-yellow-50 text-yellow-700",
+  past_due: "bg-red-50 text-red-600",
+  cancelled: "bg-gray-100 text-gray-600",
+};
+
+function InvoiceStatusBadge({ status }: { status: string }) {
+  const cls = INVOICE_STATUS_COLORS[status] ?? "bg-gray-100 text-gray-600";
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>
+      {status}
+    </span>
+  );
+}
 
 type Tab = "overview" | "patients" | "appointments" | "therapists" | "plans";
 
@@ -60,12 +78,18 @@ export function SuperAdminTenantDetail() {
   const therapists = useTenantTherapists(id);
   const appointments = useTenantAppointments(id);
   const plans = useTenantTreatmentPlans(id);
+  const { invoices, isLoading: invLoading, error: invError, refetch: refetchInvoices } =
+    useSAInvoiceList(id);
 
   const [planKey, setPlanKey] = useState<string>("");
   const [subStatus, setSubStatus] = useState<string>("");
   const [trialEnd, setTrialEnd] = useState<string>("");
   const [saving, setSaving] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    refetchInvoices();
+  }, [refetchInvoices]);
 
   const sub = detail?.subscription;
   if (sub && !planKey && !subStatus) {
@@ -279,6 +303,52 @@ export function SuperAdminTenantDetail() {
                     </p>
                   </div>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Invoice History */}
+          <div className="rounded-xl border border-gray-200 bg-white">
+            <div className="border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-gray-500" />
+              <h2 className="text-sm font-semibold text-gray-900">Invoice History</h2>
+            </div>
+            {invLoading ? (
+              <TabSpinner />
+            ) : invError ? (
+              <TabError message={invError} />
+            ) : invoices.length === 0 ? (
+              <TabEmpty />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <th className="px-6 py-3 text-left font-medium text-gray-500">Amount</th>
+                      <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
+                      <th className="px-6 py-3 text-left font-medium text-gray-500">Due</th>
+                      <th className="px-6 py-3 text-left font-medium text-gray-500">Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {invoices.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-3 font-medium text-gray-900">
+                          ৳{(inv.amount_due_cents / 100).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-3">
+                          <InvoiceStatusBadge status={inv.status} />
+                        </td>
+                        <td className="px-6 py-3 text-gray-600 text-xs">
+                          {inv.due_at ? new Date(inv.due_at).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="px-6 py-3 text-gray-600 text-xs">
+                          {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
