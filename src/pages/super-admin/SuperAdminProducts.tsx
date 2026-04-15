@@ -19,6 +19,7 @@ export default function SuperAdminProducts() {
   const [error, setError] = useState<string | null>(null);
 
   async function toggle(product_key: string, status: "active" | "disabled") {
+    setError(null);
     setBusy(true);
     const next = status === "active" ? "disabled" : "active";
     const { error: err } = await supabase

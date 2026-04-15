@@ -18,10 +18,10 @@ export function SAStatCard({ icon: Icon, label, value, accentColor = "#4ADE80" }
           <p className="nb-heading mt-1.5 text-3xl text-black">{value}</p>
         </div>
         <div
-          className="flex h-9 w-9 items-center justify-center"
+          className="flex h-10 w-10 items-center justify-center"
           style={{ background: accentColor, border: "2px solid #000", borderRadius: "2px" }}
         >
-          <Icon className="h-4 w-4 text-black" />
+          <Icon className="h-5 w-5 text-black" />
         </div>
       </div>
     </div>
