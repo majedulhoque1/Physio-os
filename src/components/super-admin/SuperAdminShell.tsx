@@ -80,7 +80,7 @@ export function SuperAdminShell() {
             <Shield className="h-4 w-4" style={{ color: "#4ADE80" }} />
           </div>
           <div>
-            <p className="nb-heading text-sm text-black">Physio OS</p>
+            <p className="nb-heading text-sm text-black">Platform Admin</p>
             <p className="text-[10px] text-gray-500 mt-0.5 uppercase tracking-wider font-bold">System Admin</p>
           </div>
           <button
