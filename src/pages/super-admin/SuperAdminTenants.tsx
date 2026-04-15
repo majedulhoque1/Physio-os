@@ -106,17 +106,16 @@ export function SuperAdminTenants() {
               </tr>
             ) : (
               tenants.map((t) => (
-                <tr key={t.clinic_id}>
+                <tr key={t.external_id}>
                   <td
                     className="cursor-pointer"
                     onClick={() =>
                       t.product_key && t.product_key !== "physio_os"
                         ? navigate(`/super-admin/products/${t.product_key}/tenants/${t.external_id}`)
-                        : navigate(`/super-admin/tenants/${t.clinic_id}`)
+                        : navigate(`/super-admin/tenants/${t.external_id}`)
                     }
                   >
-                    <p className="font-bold text-black">{t.clinic_name}</p>
-                    <p className="text-xs text-gray-500">{t.slug}</p>
+                    <p className="font-bold text-black">{t.name}</p>
                   </td>
                   <td>
                     <span className="nb-badge bg-black text-white text-xs">{t.product_key || "physio_os"}</span>
@@ -192,13 +191,13 @@ function EditTenantModal({
   onSaved: () => void;
   onError: (msg: string) => void;
 }) {
-  const [name, setName] = useState(tenant.clinic_name);
+  const [name, setName] = useState(tenant.name);
   const [saving, setSaving] = useState(false);
 
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
-    const result = await updateClinic({ clinic_id: tenant.clinic_id, name: name.trim() });
+    const result = await updateClinic({ clinic_id: tenant.external_id, name: name.trim() });
     setSaving(false);
     if (result.error) onError(result.error);
     else onSaved();
@@ -249,7 +248,7 @@ function ConfirmDeleteModal({
 
   async function handleDelete() {
     setDeletingState(true);
-    const result = await deleteTenant(tenant.clinic_id);
+    const result = await deleteTenant(tenant.external_id);
     setDeletingState(false);
     if (result.error) onError(result.error);
     else onDeleted();
@@ -260,7 +259,7 @@ function ConfirmDeleteModal({
       <div className="nb-modal w-full max-w-md p-6">
         <h2 className="nb-heading text-2xl text-black">Delete Tenant</h2>
         <p className="mt-2 text-sm font-medium text-gray-700">
-          Delete <span className="font-bold text-black">{tenant.clinic_name}</span>? This permanently removes all patients, therapists, appointments, treatment plans, subscriptions, and invoices. This cannot be undone.
+          Delete <span className="font-bold text-black">{tenant.name}</span>? This permanently removes all patients, therapists, appointments, treatment plans, subscriptions, and invoices. This cannot be undone.
         </p>
         <div className="mt-6 flex justify-end gap-2">
           <button

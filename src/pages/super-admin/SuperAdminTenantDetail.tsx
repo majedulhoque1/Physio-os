@@ -158,39 +158,38 @@ export function SuperAdminTenantDetail() {
   return (
     <div className="space-y-6">
       {/* Back + Header */}
-      <div>
+      <div className="pb-6 border-b-2 border-black">
         <button
           onClick={() => navigate("/super-admin/tenants")}
-          className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
+          className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold text-black hover:bg-black hover:text-white px-2 py-1 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to tenants
+          Back
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">{clinic.name}</h1>
-        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-          <span>Slug: {clinic.slug}</span>
-          <span>Owner: {owner.full_name ?? owner.email ?? "—"}</span>
-          {owner.email && <span>{owner.email}</span>}
-          <span>
-            Created:{" "}
+        <h1 className="nb-heading text-4xl text-black">{clinic.name}</h1>
+        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-bold text-black">
+          <span>Slug: <span className="font-normal">{clinic.slug}</span></span>
+          <span>Owner: <span className="font-normal">{owner.full_name ?? owner.email ?? "—"}</span></span>
+          {owner.email && <span className="font-normal">{owner.email}</span>}
+          <span>Created: <span className="font-normal">
             {clinic.created_at
               ? new Date(clinic.created_at).toLocaleDateString()
               : "—"}
-          </span>
+          </span></span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex gap-6" aria-label="Tabs">
+      <div className="border-b-2 border-black">
+        <nav className="-mb-px flex gap-4" aria-label="Tabs">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
-              className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
+              className={`whitespace-nowrap pb-2 text-sm font-bold uppercase tracking-wide transition-colors ${
                 activeTab === tab.id
-                  ? "border-gray-900 text-gray-900"
-                  : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  ? "border-b-2 border-black text-black"
+                  : "border-b-2 border-transparent text-gray-600 hover:text-black"
               }`}
             >
               {tab.label}
@@ -203,19 +202,22 @@ export function SuperAdminTenantDetail() {
       {activeTab === "overview" && (
         <div className="space-y-8">
           {/* Usage Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <SAStatCard icon={Users} label="Patients" value={stats.total_patients} />
-            <SAStatCard icon={Stethoscope} label="Therapists" value={stats.total_therapists} />
-            <SAStatCard icon={CalendarDays} label="Appointments" value={stats.total_appointments} />
-            <SAStatCard icon={ClipboardList} label="Active Plans" value={stats.active_treatment_plans} />
+          <div>
+            <h2 className="nb-heading text-lg text-black mb-4 uppercase tracking-wide">📊 Summary Cards</h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <SAStatCard icon={Users} label="Patients" value={stats.total_patients} />
+              <SAStatCard icon={Stethoscope} label="Therapists" value={stats.total_therapists} />
+              <SAStatCard icon={CalendarDays} label="Appointments" value={stats.total_appointments} />
+              <SAStatCard icon={ClipboardList} label="Active Plans" value={stats.active_treatment_plans} />
+            </div>
           </div>
 
           {/* Subscription Management */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6">
-            <h2 className="mb-6 text-base font-semibold text-gray-900">Subscription Management</h2>
+          <div className="nb-card p-6">
+            <h2 className="nb-heading text-lg text-black mb-6 uppercase tracking-wide">⚙️ Subscription Management</h2>
 
             {saveError && (
-              <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+              <p className="mb-4 px-3.5 py-2.5 text-sm font-bold text-black" style={{ border: "2px solid #000", background: "#FF79C6", borderRadius: "2px" }}>
                 {saveError}
               </p>
             )}
@@ -308,10 +310,10 @@ export function SuperAdminTenantDetail() {
           </div>
 
           {/* Invoice History */}
-          <div className="rounded-xl border border-gray-200 bg-white">
-            <div className="border-b border-gray-100 px-6 py-4 flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-gray-500" />
-              <h2 className="text-sm font-semibold text-gray-900">Invoice History</h2>
+          <div className="nb-card">
+            <div className="border-b-2 border-black px-6 py-4 flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-black" />
+              <h2 className="nb-heading text-lg text-black uppercase tracking-wide">Payment History</h2>
             </div>
             {invLoading ? (
               <TabSpinner />
@@ -321,30 +323,27 @@ export function SuperAdminTenantDetail() {
               <TabEmpty />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="nb-table w-full">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="px-6 py-3 text-left font-medium text-gray-500">Amount</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500">Due</th>
-                      <th className="px-6 py-3 text-left font-medium text-gray-500">Paid</th>
+                    <tr>
+                      <th>Amount</th>
+                      <th>Status / Mode / Date</th>
+                      <th>Reference</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-50">
+                  <tbody>
                     {invoices.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-3 font-medium text-gray-900">
+                      <tr key={inv.id}>
+                        <td className="font-bold">
                           ৳{(inv.amount_due_cents / 100).toLocaleString()}
                         </td>
-                        <td className="px-6 py-3">
+                        <td>
                           <InvoiceStatusBadge status={inv.status} />
+                          <div className="text-xs text-gray-600 mt-1">
+                            {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : new Date(inv.due_at || "").toLocaleDateString()}
+                          </div>
                         </td>
-                        <td className="px-6 py-3 text-gray-600 text-xs">
-                          {inv.due_at ? new Date(inv.due_at).toLocaleDateString() : "—"}
-                        </td>
-                        <td className="px-6 py-3 text-gray-600 text-xs">
-                          {inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : "—"}
-                        </td>
+                        <td className="text-xs text-gray-600">{inv.id?.substring(0, 12) || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -356,9 +355,9 @@ export function SuperAdminTenantDetail() {
       )}
 
       {activeTab === "patients" && (
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-900">Patients</h2>
+        <div className="nb-card">
+          <div className="border-b-2 border-black px-6 py-4">
+            <h2 className="nb-heading text-lg text-black uppercase tracking-wide">👥 Patients</h2>
           </div>
           {patients.isLoading ? (
             <TabSpinner />
@@ -368,30 +367,30 @@ export function SuperAdminTenantDetail() {
             <TabEmpty />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="nb-table w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Name</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Phone</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Age</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Gender</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Diagnosis</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Therapist</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Sessions</th>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Diagnosis</th>
+                    <th>Therapist</th>
+                    <th>Status</th>
+                    <th>Sessions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {patients.data.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3 font-medium text-gray-900">{p.name}</td>
-                      <td className="px-6 py-3 text-gray-600">{p.phone}</td>
-                      <td className="px-6 py-3 text-gray-600">{p.age ?? "—"}</td>
-                      <td className="px-6 py-3 text-gray-600">{p.gender ?? "—"}</td>
-                      <td className="px-6 py-3 text-gray-600">{p.diagnosis ?? "—"}</td>
-                      <td className="px-6 py-3 text-gray-600">{p.assigned_therapist_name ?? "—"}</td>
-                      <td className="px-6 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    <tr key={p.id}>
+                      <td className="font-bold">{p.name}</td>
+                      <td>{p.phone}</td>
+                      <td>{p.age ?? "—"}</td>
+                      <td>{p.gender ?? "—"}</td>
+                      <td>{p.diagnosis ?? "—"}</td>
+                      <td>{p.assigned_therapist_name ?? "—"}</td>
+                      <td>
+                        <span className={`nb-badge ${
                           p.status === "active"
                             ? "bg-green-50 text-green-700"
                             : p.status === "completed"
@@ -401,7 +400,7 @@ export function SuperAdminTenantDetail() {
                           {p.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-gray-600">{p.completed_sessions}/{p.total_sessions}</td>
+                      <td>{p.completed_sessions}/{p.total_sessions}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -412,9 +411,9 @@ export function SuperAdminTenantDetail() {
       )}
 
       {activeTab === "appointments" && (
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-900">Appointments</h2>
+        <div className="nb-card">
+          <div className="border-b-2 border-black px-6 py-4">
+            <h2 className="nb-heading text-lg text-black uppercase tracking-wide">📅 Appointments</h2>
           </div>
           {appointments.isLoading ? (
             <TabSpinner />
@@ -424,27 +423,27 @@ export function SuperAdminTenantDetail() {
             <TabEmpty />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="nb-table w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Patient</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Therapist</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Scheduled At</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Duration</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Session #</th>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Therapist</th>
+                    <th>Scheduled At</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                    <th>Session #</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {appointments.data.map((a) => (
-                    <tr key={a.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3 font-medium text-gray-900">{a.patient_name}</td>
-                      <td className="px-6 py-3 text-gray-600">{a.therapist_name}</td>
-                      <td className="px-6 py-3 text-gray-600">
+                    <tr key={a.id}>
+                      <td className="font-bold">{a.patient_name}</td>
+                      <td>{a.therapist_name}</td>
+                      <td className="text-sm">
                         {new Date(a.scheduled_at).toLocaleString()}
                       </td>
-                      <td className="px-6 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                      <td>
+                        <span className={`nb-badge ${
                           a.status === "completed"
                             ? "bg-green-50 text-green-700"
                             : a.status === "scheduled" || a.status === "confirmed"
@@ -456,8 +455,8 @@ export function SuperAdminTenantDetail() {
                           {a.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-gray-600">{a.duration_mins} min</td>
-                      <td className="px-6 py-3 text-gray-600">{a.session_number ?? "—"}</td>
+                      <td>{a.duration_mins} min</td>
+                      <td>{a.session_number ?? "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -468,9 +467,9 @@ export function SuperAdminTenantDetail() {
       )}
 
       {activeTab === "therapists" && (
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-900">Therapists</h2>
+        <div className="nb-card">
+          <div className="border-b-2 border-black px-6 py-4">
+            <h2 className="nb-heading text-lg text-black uppercase tracking-wide">🏥 Therapists</h2>
           </div>
           {therapists.isLoading ? (
             <TabSpinner />
@@ -480,23 +479,23 @@ export function SuperAdminTenantDetail() {
             <TabEmpty />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="nb-table w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Name</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Phone</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Specialization</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Specialization</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {therapists.data.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3 font-medium text-gray-900">{t.name}</td>
-                      <td className="px-6 py-3 text-gray-600">{t.phone ?? "—"}</td>
-                      <td className="px-6 py-3 text-gray-600">{t.specialization ?? "—"}</td>
-                      <td className="px-6 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    <tr key={t.id}>
+                      <td className="font-bold">{t.name}</td>
+                      <td>{t.phone ?? "—"}</td>
+                      <td>{t.specialization ?? "—"}</td>
+                      <td>
+                        <span className={`nb-badge ${
                           t.status === "active"
                             ? "bg-green-50 text-green-700"
                             : "bg-gray-100 text-gray-600"
@@ -514,9 +513,9 @@ export function SuperAdminTenantDetail() {
       )}
 
       {activeTab === "plans" && (
-        <div className="rounded-xl border border-gray-200 bg-white">
-          <div className="border-b border-gray-100 px-6 py-4">
-            <h2 className="text-sm font-semibold text-gray-900">Treatment Plans</h2>
+        <div className="nb-card">
+          <div className="border-b-2 border-black px-6 py-4">
+            <h2 className="nb-heading text-lg text-black uppercase tracking-wide">📋 Treatment Plans</h2>
           </div>
           {plans.isLoading ? (
             <TabSpinner />
@@ -526,26 +525,26 @@ export function SuperAdminTenantDetail() {
             <TabEmpty />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="nb-table w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Patient</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Therapist</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Diagnosis</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Sessions</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Fee/Session</th>
-                    <th className="px-6 py-3 text-left font-medium text-gray-500">Total Fee</th>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Therapist</th>
+                    <th>Diagnosis</th>
+                    <th>Status</th>
+                    <th>Sessions</th>
+                    <th>Fee/Session</th>
+                    <th>Total Fee</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody>
                   {plans.data.map((tp) => (
-                    <tr key={tp.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-3 font-medium text-gray-900">{tp.patient_name}</td>
-                      <td className="px-6 py-3 text-gray-600">{tp.therapist_name}</td>
-                      <td className="px-6 py-3 text-gray-600">{tp.diagnosis ?? "—"}</td>
-                      <td className="px-6 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                    <tr key={tp.id}>
+                      <td className="font-bold">{tp.patient_name}</td>
+                      <td>{tp.therapist_name}</td>
+                      <td>{tp.diagnosis ?? "—"}</td>
+                      <td>
+                        <span className={`nb-badge ${
                           tp.status === "active"
                             ? "bg-green-50 text-green-700"
                             : tp.status === "completed"
@@ -557,13 +556,13 @@ export function SuperAdminTenantDetail() {
                           {tp.status}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-gray-600">
+                      <td>
                         {tp.completed_sessions}/{tp.total_sessions ?? "?"}
                       </td>
-                      <td className="px-6 py-3 text-gray-600">
+                      <td>
                         {tp.fee_per_session != null ? `৳${tp.fee_per_session}` : "—"}
                       </td>
-                      <td className="px-6 py-3 text-gray-600">
+                      <td>
                         {tp.total_fee != null ? `৳${tp.total_fee}` : "—"}
                       </td>
                     </tr>

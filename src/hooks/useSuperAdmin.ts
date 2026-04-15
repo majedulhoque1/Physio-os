@@ -20,18 +20,15 @@ export interface PlatformStats {
 }
 
 export interface TenantListItem {
-  clinic_id: string;
-  clinic_name: string;
-  slug: string;
+  tenant_id: string;
+  product_key: string;
+  external_id: string;  // clinic UUID for physio_os
+  name: string;         // formerly clinic_name
   owner_email: string | null;
-  owner_name: string | null;
+  status: string;
   plan_key: string | null;
   subscription_status: string | null;
   created_at: string;
-  // unified cross-product fields
-  product_key: string;
-  external_id: string;
-  tenant_id?: string;
 }
 
 export interface TenantDetail {

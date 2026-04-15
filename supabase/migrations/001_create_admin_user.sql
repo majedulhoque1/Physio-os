@@ -11,25 +11,28 @@
 -- 6. Copy the user ID and replace 'YOUR_USER_ID' below
 
 -- Replace 'YOUR_USER_ID' with the actual user ID from step above
-WITH user_id AS (
-  SELECT 'YOUR_USER_ID'::uuid AS id
-)
+-- Try to find existing user by email, or skip if not found
+BEGIN;
+
+-- Create clinic if admin user exists
 INSERT INTO public.clinics (name, slug, owner_user_id)
 SELECT
   'Majedul Hoque Clinic',
   'majedul-clinic-' || extract(epoch from now())::text,
   id
-FROM user_id
+FROM auth.users
+WHERE email = 'majedulhoqueofficial@gmail.com'
 ON CONFLICT DO NOTHING;
 
 -- Create user profile
 INSERT INTO public.user_profiles (id, full_name, default_clinic_id)
 SELECT
-  id,
+  u.id,
   'Majedul Hoque Shakil',
   c.id
-FROM user_id u, public.clinics c
-WHERE c.owner_user_id = u.id
+FROM auth.users u
+JOIN public.clinics c ON c.owner_user_id = u.id
+WHERE u.email = 'majedulhoqueofficial@gmail.com'
 ON CONFLICT DO NOTHING;
 
 -- Create clinic membership with admin role
@@ -39,6 +42,9 @@ SELECT
   u.id,
   'clinic_admin',
   'active'
-FROM user_id u, public.clinics c
-WHERE c.owner_user_id = u.id
+FROM auth.users u
+JOIN public.clinics c ON c.owner_user_id = u.id
+WHERE u.email = 'majedulhoqueofficial@gmail.com'
 ON CONFLICT DO NOTHING;
+
+COMMIT;
