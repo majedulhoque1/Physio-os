@@ -4,9 +4,10 @@ interface SAStatCardProps {
   icon: LucideIcon;
   label: string;
   value: string | number;
+  accentColor?: string;
 }
 
-export function SAStatCard({ icon: Icon, label, value }: SAStatCardProps) {
+export function SAStatCard({ icon: Icon, label, value, accentColor = "#4ADE80" }: SAStatCardProps) {
   return (
     <div className="nb-card p-5">
       <div className="flex items-start justify-between">
@@ -18,7 +19,7 @@ export function SAStatCard({ icon: Icon, label, value }: SAStatCardProps) {
         </div>
         <div
           className="flex h-9 w-9 items-center justify-center"
-          style={{ background: "#4ADE80", border: "2px solid #000", borderRadius: "2px" }}
+          style={{ background: accentColor, border: "2px solid #000", borderRadius: "2px" }}
         >
           <Icon className="h-4 w-4 text-black" />
         </div>
