@@ -12,7 +12,7 @@ export function SAStatCard({ icon: Icon, label, value, accentColor = "#4ADE80" }
     <div className="nb-card p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-bold text-black uppercase tracking-wider">
+          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">
             {label}
           </p>
           <p className="nb-heading mt-1.5 text-3xl text-black">{value}</p>
