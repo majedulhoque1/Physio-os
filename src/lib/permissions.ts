@@ -77,5 +77,9 @@ export function canAccessPath(
     return hasPermission(role, "view_analytics");
   }
 
+  if (pathname === "/inventory") {
+    return role === "clinic_admin";
+  }
+
   return false;
 }
