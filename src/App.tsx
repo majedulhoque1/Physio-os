@@ -26,6 +26,7 @@ import ProductTenants from "@/pages/super-admin/products/ProductTenants";
 import ProductTenantDetail from "@/pages/super-admin/products/ProductTenantDetail";
 import SuperAdminProducts from "@/pages/super-admin/SuperAdminProducts";
 import { Therapists } from "@/pages/Therapists";
+import { Inventory } from "@/pages/Inventory";
 
 function withBoundary(element: ReactNode) {
   return <PageErrorBoundary>{element}</PageErrorBoundary>;
@@ -172,6 +173,10 @@ function App() {
                 <Settings />
               </RoleRoute>,
             )}
+          />
+          <Route
+            path="inventory"
+            element={withBoundary(<Inventory />)}
           />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Route>

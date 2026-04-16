@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   Mail,
   Settings,
+  ShoppingBag,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -61,6 +62,13 @@ const baseDesktopNavItems: NavItem[] = [
     label: "Messages",
     title: "Message Log",
     breadcrumbs: ["Clinic", "Messages"],
+  },
+  {
+    href: "/inventory",
+    icon: ShoppingBag,
+    label: "Inventory",
+    title: "Inventory",
+    breadcrumbs: ["Clinic", "Inventory"],
   },
 ];
 

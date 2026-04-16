@@ -109,11 +109,16 @@ export function Sidebar({ isExpanded, setIsExpanded }: SidebarProps) {
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               <span
                 className={cn(
-                  "truncate transition-all duration-200",
+                  "truncate transition-all duration-200 flex items-center gap-1.5",
                   isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
                 )}
               >
                 {item.label}
+                {item.href === "/inventory" && isExpanded && (
+                  <span className="rounded-full bg-amber-400/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400">
+                    demo
+                  </span>
+                )}
               </span>
               {isExpanded && item.badge ? (
                 <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-sidebar-foreground">
