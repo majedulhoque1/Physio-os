@@ -5,6 +5,8 @@ export type AppPermission =
   | "manage_billing"
   | "manage_clinic"
   | "manage_patients"
+  | "manage_prescription_library"
+  | "manage_prescriptions"
   | "manage_therapists"
   | "record_session_notes"
   | "view_analytics"
@@ -16,6 +18,8 @@ const permissionsByRole: Record<ClinicStaffRole, AppPermission[]> = {
     "manage_billing",
     "manage_clinic",
     "manage_patients",
+    "manage_prescription_library",
+    "manage_prescriptions",
     "manage_therapists",
     "record_session_notes",
     "view_analytics",
@@ -28,7 +32,10 @@ const permissionsByRole: Record<ClinicStaffRole, AppPermission[]> = {
     "view_analytics",
     "view_billing",
   ],
-  therapist: ["record_session_notes"],
+  therapist: [
+    "manage_prescriptions",
+    "record_session_notes",
+  ],
 };
 
 export function hasPermission(
