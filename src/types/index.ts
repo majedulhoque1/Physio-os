@@ -524,10 +524,30 @@ export interface Database {
         Row: UserProfileRow;
         Update: Partial<UserProfileRow>;
       };
+      prescriptions: {
+        Insert: import("./prescription").PrescriptionInsert;
+        Relationships: [];
+        Row: import("./prescription").PrescriptionRow;
+        Update: import("./prescription").PrescriptionUpdate;
+      };
+      protocol_templates: {
+        Insert: import("./prescription").ProtocolTemplateInsert;
+        Relationships: [];
+        Row: import("./prescription").ProtocolTemplateRow;
+        Update: import("./prescription").ProtocolTemplateUpdate;
+      };
+      bangla_advice_library: {
+        Insert: import("./prescription").BanglaAdviceInsert;
+        Relationships: [];
+        Row: import("./prescription").BanglaAdviceRow;
+        Update: import("./prescription").BanglaAdviceUpdate;
+      };
     };
     Views: Record<string, never>;
   };
 }
+
+export * from "./prescription";
 
 export interface DashboardKpis {
   activePatients: number;
