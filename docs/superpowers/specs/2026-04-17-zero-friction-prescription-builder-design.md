@@ -33,10 +33,11 @@ That's the friction we're removing.
 6. Chip-based entry for chief complaints, body parts, modalities, exercises
 7. VAS pain slider (1–10)
 8. Bangla advice library — checkbox selection, no Bangla typing
-9. Save & Print (browser print dialog; clean print stylesheet)
+9. Save & Print — **hybrid**: digital pre-fill + paper-friendly print layout with ruled "Doctor's Notes" area, blank body-diagram outline, and whitespace for hand annotation
 
 **Out (v2+):**
-- SVG body map (v1 ships body-part **chips** in an anatomical grid layout)
+- SVG body map **for input** (v1 ships body-part **chips** in an anatomical grid layout; note: the print view does include a blank body-diagram outline for hand annotation — that's different)
+- **Digital stylus/canvas annotation** inside the app (columns reserved; UI deferred)
 - WhatsApp send integration
 - Rich PDF generation (v1 uses browser print)
 - AI-suggested protocol based on chief complaint
@@ -65,6 +66,8 @@ That's the friction we're removing.
 | `notes` | text | optional free notes |
 | `template_used_id` | uuid nullable | FK → protocol_templates (audit) |
 | `cloned_from_id` | uuid nullable | FK → prescriptions (audit) |
+| `handwriting_svg` | text nullable | reserved for v2 stylus annotation; unused in v1 |
+| `handwriting_url` | text nullable | reserved for v2 PNG storage; unused in v1 |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
 
@@ -149,8 +152,28 @@ That's the friction we're removing.
 
 11. **Footer** — `[Cancel]` `[Save Draft]` `[Save & Print]`
 
-### Print view
-Separate `/prescriptions/:id/print` route. Clinic logo + header, patient block, all selected items in a readable layout, Bangla advice rendered in a Bangla-safe font (SolaimanLipi / Kalpurush fallback). `@media print` stylesheet hides chrome.
+### Print view — paper-friendly (hybrid)
+
+BD doctors commonly hand-annotate the printed Rx before giving it to the patient. The print layout is explicitly designed for this:
+
+Separate `/prescriptions/:id/print` route. Layout:
+1. **Header** — clinic logo, clinic name, therapist name + reg #, date
+2. **Patient block** — name, age, gender, phone, session #
+3. **Pre-filled digital sections** — chief complaints, body parts, VAS, diagnosis, modalities, exercises, advice (EN + BN)
+4. **"Doctor's Notes" area** — ~6 ruled blank lines for hand-written additions
+5. **Blank body-diagram outline** — simple anterior/posterior human silhouette (SVG, black outline only) the doctor can mark with a pen
+6. **Extra blank rows** under Exercises and Advice for pen additions
+7. **Footer** — signature line, clinic stamp area, follow-up date line
+
+Bangla rendering via font stack: SolaimanLipi, Kalpurush, Noto Sans Bengali, system. `@media print` hides app chrome, sets A5 or A4 page size (configurable per clinic in Settings → Prescriptions), uses 12–14pt body, and enforces page break control so Doctor's Notes + signature don't split across pages.
+
+### Forward-compatibility (Option B — digital stylus, deferred to v2)
+
+To keep the door open for tablet-stylus annotation later without a migration, `prescriptions` includes two **nullable** columns now:
+- `handwriting_svg text` — SVG strokes captured from canvas
+- `handwriting_url text` — Supabase Storage URL for a flattened PNG
+
+These fields are unused in v1 and won't appear in any UI. Adding the canvas overlay in v2 is a pure additive change.
 
 ## Clone behavior
 
